@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ripley Media · Dashboard</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'Google Sans','Open Sans',Arial,sans-serif;font-size:15px;background:#f0eaf5;color:#1a0a1e}
+.app{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+
+/* topbar */
+.topbar{background:#1a0a1e;color:#fff;padding:0 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0;height:54px}
+.topbar h1{font-size:16px;font-weight:500;letter-spacing:.3px;white-space:nowrap}
+.topbar .sub{font-size:12px;opacity:.4;margin-left:8px}
+.accent{height:3px;background:#7b2d8b;flex-shrink:0}
+
+/* tab nav */
+.tabnav{background:#2a1030;display:flex;gap:2px;padding:0 20px;flex-shrink:0}
+.tabnav-btn{font-size:13px;padding:12px 22px;color:rgba(255,255,255,.5);border:none;background:transparent;cursor:pointer;border-bottom:3px solid transparent;transition:all .15s;white-space:nowrap}
+.tabnav-btn:hover{color:rgba(255,255,255,.8)}
+.tabnav-btn.active{color:#fff;border-bottom-color:#7b2d8b;font-weight:500}
+
+/* config / error */
+.config-bar{background:#fff8e1;border-bottom:.5px solid #f0d080;padding:9px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex-shrink:0}
+.config-bar label{font-size:13px;font-weight:600;color:#7a5500;white-space:nowrap}
+.config-bar input{flex:1;min-width:240px;font-size:13px;padding:5px 10px;border:.5px solid #d4a800;border-radius:5px;color:#3a2800;background:#fffdf0}
+.error-bar{background:#fff0f0;border-bottom:.5px solid #f5c0c0;color:#b00020;padding:7px 20px;font-size:13px;display:none;flex-shrink:0}
+
+/* tab pages */
+.tab-page{display:none;flex:1;overflow:hidden;flex-direction:column}
+.tab-page.active{display:flex}
+
+/* ═══════════ REPORTING ═══════════ */
+.filters-bar{background:#fff;border-bottom:.5px solid #ddd0e8;padding:10px 18px;display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;flex-shrink:0}
+.fgroup{display:flex;flex-direction:column;gap:5px}
+.fgroup-label{font-size:11px;font-weight:700;color:#7b2d8b;text-transform:uppercase;letter-spacing:.5px}
+.chips{display:flex;gap:5px;flex-wrap:wrap;max-width:400px}
+.chip{font-size:12px;padding:3px 11px;border:.5px solid #c0a0d0;border-radius:10px;cursor:pointer;background:#fff;color:#4a2545;white-space:nowrap;user-select:none;transition:all .12s}
+.chip:hover{background:#f0e0f8;border-color:#9060a8}
+.chip.active{background:#7b2d8b;color:#fff;border-color:#7b2d8b}
+.chip.disabled{opacity:.3;cursor:default;pointer-events:none}
+.cobro-select,.prov-select{font-size:13px;padding:5px 10px;border:.5px solid #c0a0d0;border-radius:5px;background:#faf5fc;color:#1a0a1e;cursor:pointer}
+.fsep{width:.5px;background:#eed8f5;align-self:stretch;margin:0 2px}
+.btn{font-size:12px;padding:5px 12px;border:.5px solid #b08ac0;border-radius:5px;background:transparent;color:#4a2545;cursor:pointer;white-space:nowrap}
+.btn:hover{background:#ede0f5}
+.btn-primary{background:#7b2d8b;color:#fff;border-color:#7b2d8b}
+.btn-primary:hover{background:#5c1f6b}
+
+.main{display:flex;flex:1;overflow:hidden}
+.sidebar{width:256px;flex-shrink:0;background:#fff;border-right:.5px solid #ddd0e8;overflow-y:auto;display:flex;flex-direction:column}
+.sidebar-section{padding:12px 14px;border-bottom:.5px solid #eee0f5}
+.sidebar-section h3{font-size:10px;font-weight:700;color:#7b2d8b;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.kpi{background:#faf5fc;border:.5px solid #e8d8f0;border-radius:6px;padding:9px 10px;text-align:center}
+.kpi .num{font-size:22px;font-weight:700;color:#7b2d8b;line-height:1}
+.kpi .lbl{font-size:10px;color:#999;margin-top:3px}
+.kpi.warn .num{color:#92400E}.kpi.warn{background:#fffbf0;border-color:#f0d090}
+.kpi.ok .num{color:#065F46}.kpi.ok{background:#f0fdf8;border-color:#a0ddc8}
+.summary-list{display:flex;flex-direction:column;gap:4px}
+.srow{display:flex;align-items:center;gap:6px;font-size:12px;padding:3px 0}
+.srow .sname{color:#4a2545;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srow .sbar{width:54px;height:5px;background:#eee;border-radius:2px;flex-shrink:0}
+.srow .sfill{height:5px;background:#7b2d8b;border-radius:2px}
+.srow .scnt{font-size:12px;font-weight:700;color:#7b2d8b;min-width:20px;text-align:right}
+.srow .spend{font-size:10px;color:#92400E;min-width:24px;text-align:right}
+
+.content{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.table-wrap{flex:1;overflow:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#3d1f45;color:#f5e6fa;font-weight:500;padding:9px 11px;text-align:left;white-space:nowrap;border-bottom:2px solid #7b2d8b;position:sticky;top:0;z-index:2}
+td{padding:7px 11px;border-bottom:.5px solid #e8d8f0;vertical-align:middle;white-space:nowrap}
+tr.r0 td{background:#fff}tr.r1 td{background:#faf5fc}
+tr.c0 td{background:#ebebeb}tr.c1 td{background:#e2e2e2}
+tr:hover td{filter:brightness(.96)}
+.col-id{color:#7b2d8b;font-weight:700;border-left:3px solid #7b2d8b!important}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+.b-pend{background:#FEF3C7;color:#92400E}
+.b-cob{background:#D1FAE5;color:#065F46}
+.b-sem{background:#ede0f7;color:#3d1f45}
+a.tl{color:#7b2d8b;text-decoration:none;font-size:12px}
+a.tl:hover{text-decoration:underline}
+
+/* ═══════════ REPORTE PROVEEDOR ═══════════ */
+.prov-filters{background:#fff;border-bottom:.5px solid #ddd0e8;padding:10px 18px;display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;flex-shrink:0}
+.prov-table-wrap{flex:1;overflow:auto}
+.prov-table{width:100%;border-collapse:collapse;font-size:13px}
+.prov-table th{background:#3d1f45;color:#f5e6fa;font-weight:500;padding:9px 11px;text-align:left;white-space:nowrap;border-bottom:2px solid #7b2d8b;position:sticky;top:0;z-index:2}
+.prov-table th.mes-col{text-align:right;background:#4a2550}
+.prov-table th.total-col{text-align:right;background:#2a1535}
+.prov-table td{padding:6px 11px;border-bottom:.5px solid #e8d8f0;vertical-align:middle;white-space:nowrap}
+.prov-table td.num-cell{text-align:right;font-variant-numeric:tabular-nums;font-size:12px;color:#4a2545}
+.prov-table td.total-cell{text-align:right;font-weight:700;color:#7b2d8b;font-size:13px;background:#f5eeff}
+.prov-table td.empty-cell{color:#ddd;text-align:right;font-size:12px}
+
+/* Group rows */
+.prov-table tr.grp-pm td{background:#2a1535;color:#f0d8ff;font-weight:700;font-size:13px}
+.prov-table tr.grp-div td{background:#3d1f45;color:#e8c8f8;font-weight:600;font-size:12px;padding-left:18px}
+.prov-table tr.grp-marca td{background:#f5eeff;color:#4a2545;font-weight:600;font-size:12px;padding-left:32px}
+.prov-table tr.grp-marca td.num-cell{background:#f5eeff}
+.prov-table tr.data-row td{padding-left:46px;font-size:12px}
+.prov-table tr.data-row:nth-child(even) td{background:#faf5fc}
+.prov-table tr.subtotal-div td{background:#ede0f7;font-weight:600;font-size:12px;color:#3d1f45;font-style:italic}
+.prov-table tr.subtotal-pm td{background:#d8c0f0;font-weight:700;font-size:13px;color:#1a0a1e}
+.prov-table tr.grand-total td{background:#7b2d8b;color:#fff;font-weight:700;font-size:14px}
+.prov-table tr.grand-total td.num-cell,.prov-table tr.grand-total td.total-cell{color:#fff;background:#7b2d8b}
+
+/* statusbar */
+.statusbar{background:#faf5fc;border-top:.5px solid #ddd0e8;padding:6px 18px;display:flex;align-items:center;gap:14px;font-size:12px;color:#999;flex-shrink:0}
+.statusbar b{color:#7b2d8b}
+
+.spinner{display:inline-block;width:15px;height:15px;border:2px solid #ddd0e8;border-top-color:#7b2d8b;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:5px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.state-box{padding:40px;text-align:center;color:#ccc;font-style:italic;font-size:14px}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- topbar -->
+<div class="topbar">
+  <div style="display:flex;align-items:center">
+    <h1>RIPLEY MEDIA · DASHBOARD</h1>
+    <span class="sub" id="ts-label"></span>
+  </div>
+  <div style="display:flex;gap:6px">
+    <button class="btn" style="color:#fff;border-color:rgba(255,255,255,.3)" onclick="actualizarTab()">↻ Actualizar</button>
+    <button class="btn" style="color:rgba(255,255,255,.5);border-color:rgba(255,255,255,.2);font-size:10px" onclick="toggleConfig()">⚙ URL</button>
+  </div>
+</div>
+<div class="accent"></div>
+
+<!-- tab nav -->
+<div class="tabnav">
+  <button class="tabnav-btn active" onclick="cambiarTab('reporting')">📊 Reporting</button>
+  <button class="tabnav-btn" onclick="cambiarTab('reporte-proveedor')">📦 Reporte Proveedor</button>
+</div>
+
+<!-- config -->
+<div class="config-bar" id="config-bar">
+  <label>🔗 URL Web App:</label>
+  <input type="text" id="api-url" placeholder="https://script.google.com/macros/s/XXXXXX/exec"/>
+  <button class="btn-primary btn" onclick="guardarUrl()">Guardar y cargar</button>
+</div>
+<div class="error-bar" id="error-bar"></div>
+
+<!-- ═══ TAB: REPORTING ═══ -->
+<div class="tab-page active" id="tab-reporting">
+  <div class="filters-bar">
+    <div class="fgroup">
+      <div class="fgroup-label">Estado cobro</div>
+      <select class="cobro-select" id="f-cobro" onchange="cargarReporting()">
+        <option value="Pendiente">Pendiente</option>
+        <option value="Cobrado">Cobrado</option>
+        <option value="TODOS">TODOS</option>
+      </select>
+    </div>
+    <div class="fsep"></div>
+    <div class="fgroup">
+      <div class="fgroup-label">PM</div>
+      <div class="chips" id="chips-pm"></div>
+    </div>
+    <div class="fsep"></div>
+    <div class="fgroup">
+      <div class="fgroup-label">1P / 3P</div>
+      <div class="chips" id="chips-1p3p"></div>
+    </div>
+    <div class="fsep"></div>
+    <div class="fgroup">
+      <div class="fgroup-label">División</div>
+      <div class="chips" id="chips-div"></div>
+    </div>
+    <div class="fsep"></div>
+    <div class="fgroup">
+      <div class="fgroup-label">Mes de campaña</div>
+      <div class="chips" id="chips-mes"></div>
+    </div>
+    <div class="fsep"></div>
+    <div class="fgroup">
+      <div class="fgroup-label">Semana tentativa</div>
+      <div class="chips" id="chips-sem"></div>
+    </div>
+    <div class="fsep"></div>
+    <button class="btn" onclick="limpiarFiltros()" style="align-self:center;margin-top:12px">✕ Limpiar</button>
+  </div>
+
+  <div class="main">
+    <div class="sidebar">
+      <div class="sidebar-section">
+        <h3>Resumen general</h3>
+        <div class="kpi-grid">
+          <div class="kpi"><div class="num" id="k-total">—</div><div class="lbl">Campañas</div></div>
+          <div class="kpi warn"><div class="num" id="k-pend">—</div><div class="lbl">Pend. de cobro</div></div>
+          <div class="kpi ok"><div class="num" id="k-cob">—</div><div class="lbl">Cobradas</div></div>
+          <div class="kpi"><div class="num" id="k-sems">—</div><div class="lbl">Semanas</div></div>
+        </div>
+      </div>
+      <div class="sidebar-section"><h3>Por semana tentativa</h3><div class="summary-list" id="sum-sem"></div></div>
+      <div class="sidebar-section"><h3>Por PM</h3><div class="summary-list" id="sum-pm"></div></div>
+      <div class="sidebar-section"><h3>Por división</h3><div class="summary-list" id="sum-div"></div></div>
+      <div class="sidebar-section" style="border-bottom:none"><h3>Por departamento</h3><div class="summary-list" id="sum-dep"></div></div>
+    </div>
+    <div class="content">
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>ID Plan</th><th>Mes campaña</th><th>Categoría</th><th>1P/3P</th>
+            <th>División</th><th>Departamento</th><th>Marca</th><th>Campaña</th>
+            <th>Trello</th><th>Cobranding</th><th>Sem tentativa</th>
+            <th>Reporte medios</th><th>Estado cobro</th><th>PM Ripley media</th>
+          </tr></thead>
+          <tbody id="tbody">
+            <tr><td colspan="14"><div class="state-box">Ingresa la URL de tu Web App para comenzar.</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TAB: REPORTE PROVEEDOR ═══ -->
+<div class="tab-page" id="tab-reporte-proveedor">
+  <div class="prov-filters">
+    <div class="fgroup">
+      <div class="fgroup-label">Estado cobro</div>
+      <select class="cobro-select" id="pf-cobro" onchange="aplicarFiltrosProv()">
+        <option value="">Todos</option>
+        <option value="Pendiente">Pendiente</option>
+        <option value="Cobrado">Cobrado</option>
+      </select>
+    </div>
+    <div class="fsep"></div>
+    <div class="fgroup">
+      <div class="fgroup-label">PM</div>
+      <div class="chips" id="pchips-pm"></div>
+    </div>
+    <div class="fsep"></div>
+    <div class="fgroup">
+      <div class="fgroup-label">1P / 3P</div>
+      <div class="chips" id="pchips-1p3p"></div>
+    </div>
+    <div class="fsep"></div>
+    <div class="fgroup">
+      <div class="fgroup-label">División</div>
+      <div class="chips" id="pchips-div"></div>
+    </div>
+    <div class="fsep"></div>
+    <button class="btn" onclick="limpiarFiltrosProv()" style="align-self:center;margin-top:12px">✕ Limpiar</button>
+  </div>
+  <div class="prov-table-wrap">
+    <table class="prov-table" id="prov-table">
+      <thead id="prov-thead"></thead>
+      <tbody id="prov-tbody">
+        <tr><td colspan="6"><div class="state-box">Ingresa la URL de tu Web App para comenzar.</div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- statusbar -->
+<div class="statusbar">
+  <span id="s-info">—</span>
+  <span id="s-filters" style="color:#b08ac0"></span>
+  <span style="margin-left:auto" id="s-ts"></span>
+</div>
+
+</div><!-- /app -->
+<script>
+const LS_KEY = "rmedia_v4";
+let tabActual = "reporting";
+let allData = [];
+let provData = { rows:[], meses:[] };
+
+// sel reporting
+const sel = { pm: new Set(), "1p3p": new Set(), div: new Set(), mes: new Set(), sem: new Set() };
+// sel proveedor
+const psel = { pm: new Set(), "1p3p": new Set(), div: new Set() };
+
+// ── Init ──────────────────────────────────────────────────────
+function init() {
+  const saved = localStorage.getItem(LS_KEY);
+  if (saved) {
+    document.getElementById("api-url").value = saved;
+    document.getElementById("config-bar").style.display = "none";
+    cargarReporting();
+  }
+}
+
+function toggleConfig() {
+  const b = document.getElementById("config-bar");
+  b.style.display = b.style.display === "none" ? "" : "none";
+}
+
+function guardarUrl() {
+  const url = document.getElementById("api-url").value.trim();
+  if (!url.startsWith("https://")) { alert("La URL debe comenzar con https://"); return; }
+  localStorage.setItem(LS_KEY, url);
+  document.getElementById("config-bar").style.display = "none";
+  actualizarTab();
+}
+
+function cambiarTab(tab) {
+  tabActual = tab;
+  document.querySelectorAll(".tabnav-btn").forEach((b,i) => {
+    b.classList.toggle("active", (i===0 && tab==="reporting") || (i===1 && tab==="reporte-proveedor"));
+  });
+  document.querySelectorAll(".tab-page").forEach(p => p.classList.remove("active"));
+  document.getElementById("tab-" + tab).classList.add("active");
+  actualizarTab();
+}
+
+function actualizarTab() {
+  if (tabActual === "reporting") cargarReporting();
+  else cargarReporteProveedor();
+}
+
+// ══════════════════════════════════════════════════════════════
+// REPORTING
+// ══════════════════════════════════════════════════════════════
+async function cargarReporting() {
+  const url = localStorage.getItem(LS_KEY);
+  if (!url) { document.getElementById("config-bar").style.display = ""; return; }
+  const cobro = document.getElementById("f-cobro").value;
+  setLoadingR();
+  ocultarError();
+  Object.keys(sel).forEach(k => sel[k].clear());
+  try {
+    const resp = await fetch(`${url}?endpoint=reporting&cobro=${encodeURIComponent(cobro)}`);
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    const json = await resp.json();
+    if (json.error) throw new Error(json.error);
+    allData = json.rows || [];
+    construirChips();
+    aplicarFiltros();
+    setTs();
+  } catch(err) { mostrarError(err.message); }
+}
+
+function construirChips() {
+  renderChips("chips-pm",   unicosR(r => r.pmRipley),   "pm");
+  renderChips("chips-1p3p", unicosR(r => r.unoPTresP),  "1p3p");
+  renderChips("chips-div",  unicosR(r => r.division),   "div");
+  renderChips("chips-mes",  unicosRMes(),                "mes");
+  renderChips("chips-sem",  unicosRSem(),                "sem");
+}
+
+function renderChips(cid, vals, dim) {
+  const disp = dispR(dim);
+  document.getElementById(cid).innerHTML = vals.map(v => {
+    const act = sel[dim].has(v);
+    const dis = !disp.has(v) && !act;
+    return `<span class="chip${act?" active":""}${dis?" disabled":""}" onclick="toggleChip('${dim}','${esc(v)}')">${esc(v)}</span>`;
+  }).join("");
+}
+
+function toggleChip(dim, val) {
+  if (sel[dim].has(val)) sel[dim].delete(val); else sel[dim].add(val);
+  aplicarFiltros();
+}
+
+function dispR(excluir) {
+  const pre = allData.filter(r => pasaR(r, excluir));
+  const s = new Set();
+  pre.forEach(r => { const v = valR(r, excluir); if(v) s.add(v); });
+  return s;
+}
+
+function valR(r, dim) {
+  if (dim==="pm")   return String(r.pmRipley).trim();
+  if (dim==="1p3p") return String(r.unoPTresP).trim();
+  if (dim==="div")  return String(r.division).trim();
+  if (dim==="mes")  return String(r.mes).trim();
+  if (dim==="sem")  return String(r.semTentativa).trim();
+}
+
+function pasaR(r, excluir) {
+  if (excluir!=="pm"   && sel.pm.size   >0 && !sel.pm.has(String(r.pmRipley).trim()))     return false;
+  if (excluir!=="1p3p" && sel["1p3p"].size>0 && !sel["1p3p"].has(String(r.unoPTresP).trim())) return false;
+  if (excluir!=="div"  && sel.div.size  >0 && !sel.div.has(String(r.division).trim()))    return false;
+  if (excluir!=="mes"  && sel.mes.size  >0 && !sel.mes.has(String(r.mes).trim()))         return false;
+  if (excluir!=="sem"  && sel.sem.size  >0 && !sel.sem.has(String(r.semTentativa).trim())) return false;
+  return true;
+}
+
+function aplicarFiltros() {
+  ["pm","1p3p","div","mes","sem"].forEach(dim => {
+    const disp = dispR(dim);
+    const cid = {pm:"chips-pm","1p3p":"chips-1p3p",div:"chips-div",mes:"chips-mes",sem:"chips-sem"}[dim];
+    document.getElementById(cid).querySelectorAll(".chip").forEach(c => {
+      const v = c.textContent;
+      const act = sel[dim].has(v);
+      c.className = "chip"+(act?" active":"")+(!disp.has(v)&&!act?" disabled":"");
+    });
+  });
+  const filtered = allData.filter(r => pasaR(r, null));
+  const nAct = ["pm","1p3p","div","mes","sem"].reduce((s,d)=>s+sel[d].size,0);
+  document.getElementById("s-filters").textContent = nAct ? `${nAct} filtro(s) activo(s)` : "";
+  renderTabla(filtered);
+  renderSidebar(filtered);
+  document.getElementById("s-info").innerHTML = `Mostrando <b>${filtered.length}</b> de <b>${allData.length}</b> campañas`;
+}
+
+function limpiarFiltros() {
+  Object.keys(sel).forEach(k => sel[k].clear());
+  aplicarFiltros();
+}
+
+function renderTabla(rows) {
+  const tbody = document.getElementById("tbody");
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="14"><div class="state-box">Sin campañas con los filtros actuales.</div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = rows.map((r,i) => {
+    const esCob = r.estadoCobro==="Cobrado";
+    const cls = esCob?(i%2===0?"c0":"c1"):(i%2===0?"r0":"r1");
+    const badgeE = esCob?`<span class="badge b-cob">Cobrado</span>`:`<span class="badge b-pend">Pendiente</span>`;
+    const trCell = r.trello?`<a class="tl" href="${esc(String(r.trello))}" target="_blank">↗ Ver</a>`:`<span style="color:#ddd">—</span>`;
+    const cobStr = r.cobranding>0?`S/ ${Number(r.cobranding).toLocaleString("es-PE",{minimumFractionDigits:2,maximumFractionDigits:2})}`:
+      `<span style="color:#ccc">—</span>`;
+    return `<tr class="${cls}">
+      <td class="col-id">${esc(String(r.idPlan))}</td>
+      <td>${esc(String(r.mes))}</td><td>${esc(String(r.categoria))}</td>
+      <td>${esc(String(r.unoPTresP))}</td><td>${esc(String(r.division))}</td>
+      <td>${esc(String(r.departamento))}</td>
+      <td style="font-weight:500">${esc(String(r.marca))}</td>
+      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis" title="${esc(String(r.campana))}">${esc(String(r.campana))}</td>
+      <td>${trCell}</td><td>${cobStr}</td>
+      <td><span class="badge b-sem">${esc(String(r.semTentativa))}</span></td>
+      <td style="color:#999;font-size:10px">${esc(String(r.reporteMedios))}</td>
+      <td>${badgeE}</td><td>${esc(String(r.pmRipley))}</td>
+    </tr>`;
+  }).join("");
+}
+
+function renderSidebar(rows) {
+  const pend = rows.filter(r=>r.estadoCobro==="Pendiente").length;
+  const cob  = rows.filter(r=>r.estadoCobro==="Cobrado").length;
+  const sems = new Set(rows.map(r=>String(r.semTentativa).trim()).filter(Boolean)).size;
+  document.getElementById("k-total").textContent = rows.length;
+  document.getElementById("k-pend").textContent  = pend;
+  document.getElementById("k-cob").textContent   = cob;
+  document.getElementById("k-sems").textContent  = sems;
+  const bySem = agr(rows, r=>String(r.semTentativa).trim());
+  renderList("sum-sem", Object.keys(bySem).sort((a,b)=>numSem(a)-numSem(b)), bySem);
+  renderList("sum-pm",  Object.keys(agr(rows,r=>String(r.pmRipley).trim())).sort(), agr(rows,r=>String(r.pmRipley).trim()));
+  renderList("sum-div", Object.keys(agr(rows,r=>String(r.division).trim())).sort(), agr(rows,r=>String(r.division).trim()));
+  renderList("sum-dep", Object.keys(agr(rows,r=>String(r.departamento).trim())).sort(), agr(rows,r=>String(r.departamento).trim()));
+}
+
+function renderList(id, keys, map) {
+  const max = Math.max(1,...keys.map(k=>map[k].count));
+  document.getElementById(id).innerHTML = keys.map(k=>{
+    const {count,pend}=map[k];
+    return `<div class="srow">
+      <span class="sname" title="${esc(k)}">${esc(k)}</span>
+      <span class="spend">${pend>0?"("+pend+"P)":""}</span>
+      <div class="sbar"><div class="sfill" style="width:${Math.round(count/max*100)}%"></div></div>
+      <span class="scnt">${count}</span>
+    </div>`;
+  }).join("")||`<div style="font-size:10px;color:#ccc;padding:3px 0">Sin datos</div>`;
+}
+
+// ══════════════════════════════════════════════════════════════
+// REPORTE PROVEEDOR
+// ══════════════════════════════════════════════════════════════
+async function cargarReporteProveedor() {
+  const url = localStorage.getItem(LS_KEY);
+  if (!url) { document.getElementById("config-bar").style.display = ""; return; }
+  setLoadingP();
+  ocultarError();
+  Object.keys(psel).forEach(k => psel[k].clear());
+  try {
+    const resp = await fetch(`${url}?endpoint=reporte-proveedor`);
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    const json = await resp.json();
+    if (json.error) throw new Error(json.error);
+    provData = { rows: json.rows||[], meses: json.meses||[] };
+    construirChipsProv();
+    aplicarFiltrosProv();
+    setTs();
+  } catch(err) { mostrarError(err.message); }
+}
+
+function construirChipsProv() {
+  renderChipsProv("pchips-pm",   unicosP(r=>r.pm),        "pm");
+  renderChipsProv("pchips-1p3p", unicosP(r=>r.unoPTresP), "1p3p");
+  renderChipsProv("pchips-div",  unicosP(r=>r.division),  "div");
+}
+
+function renderChipsProv(cid, vals, dim) {
+  const disp = dispP(dim);
+  document.getElementById(cid).innerHTML = vals.map(v=>{
+    const act = psel[dim].has(v);
+    const dis = !disp.has(v)&&!act;
+    return `<span class="chip${act?" active":""}${dis?" disabled":""}" onclick="toggleChipProv('${dim}','${esc(v)}')">${esc(v)}</span>`;
+  }).join("");
+}
+
+function toggleChipProv(dim, val) {
+  if (psel[dim].has(val)) psel[dim].delete(val); else psel[dim].add(val);
+  aplicarFiltrosProv();
+}
+
+function dispP(excluir) {
+  const pre = provData.rows.filter(r=>pasaP(r,excluir));
+  const s=new Set(); pre.forEach(r=>{ const v=valP(r,excluir); if(v) s.add(v); }); return s;
+}
+
+function valP(r,dim) {
+  if(dim==="pm")   return String(r.pm).trim();
+  if(dim==="1p3p") return String(r.unoPTresP).trim();
+  if(dim==="div")  return String(r.division).trim();
+}
+
+function pasaP(r,excluir) {
+  const fCobro = document.getElementById("pf-cobro").value;
+  if(fCobro && String(r.estadoCobro).trim() !== fCobro) return false;
+  if(excluir!=="pm"   && psel.pm.size>0   && !psel.pm.has(String(r.pm).trim()))        return false;
+  if(excluir!=="1p3p" && psel["1p3p"].size>0 && !psel["1p3p"].has(String(r.unoPTresP).trim())) return false;
+  if(excluir!=="div"  && psel.div.size>0  && !psel.div.has(String(r.division).trim())) return false;
+  return true;
+}
+
+function aplicarFiltrosProv() {
+  ["pm","1p3p","div"].forEach(dim=>{
+    const disp=dispP(dim);
+    const cid={"pm":"pchips-pm","1p3p":"pchips-1p3p","div":"pchips-div"}[dim];
+    document.getElementById(cid).querySelectorAll(".chip").forEach(c=>{
+      const v=c.textContent; const act=psel[dim].has(v);
+      c.className="chip"+(act?" active":"")+(!disp.has(v)&&!act?" disabled":"");
+    });
+  });
+  const filtered = provData.rows.filter(r=>pasaP(r,null));
+
+  // Calcular meses activos solo de las filas filtradas
+  const mesesActivos = [...new Set(
+    filtered.flatMap(r => Object.keys(r.porMes).filter(m => r.porMes[m] > 0))
+  )].sort(ordenMes);
+
+  renderTablaProveedor(filtered, mesesActivos);
+  document.getElementById("s-info").innerHTML = `<b>${filtered.length}</b> líneas · Reporte Medios = Enviado, Reporte Proveedor = No enviado`;
+}
+
+function limpiarFiltrosProv() {
+  Object.keys(psel).forEach(k=>psel[k].clear());
+  document.getElementById("pf-cobro").value = "";
+  aplicarFiltrosProv();
+}
+
+function renderTablaProveedor(rows, meses) {
+  const thead = document.getElementById("prov-thead");
+  const tbody  = document.getElementById("prov-tbody");
+
+  if (!rows.length) {
+    thead.innerHTML = "";
+    tbody.innerHTML = `<tr><td colspan="6"><div class="state-box">Sin datos con los filtros actuales.</div></td></tr>`;
+    document.getElementById("s-info").innerHTML = "Sin datos";
+    return;
+  }
+
+  const ncols = 5 + meses.length + 1; // 1P/3P + Cat + Div + Marca + Campaña + meses + Total
+
+  // Header
+  thead.innerHTML = `<tr>
+    <th>1P/3P</th><th>Categoría</th><th>División</th><th>Marca</th><th>Campaña</th>
+    ${meses.map(m=>`<th class="mes-col">${esc(m)}</th>`).join("")}
+    <th class="total-col">Total</th>
+  </tr>`;
+
+  const fmt = v => v>0 ? `S/ ${v.toLocaleString("es-PE",{minimumFractionDigits:2,maximumFractionDigits:2})}` : `<span style="color:#ddd">—</span>`;
+  const fmtPlain = v => v>0 ? `S/ ${v.toLocaleString("es-PE",{minimumFractionDigits:2,maximumFractionDigits:2})}` : "";
+
+  // Totales globales
+  const gtMes = {}; meses.forEach(m=>{ gtMes[m]=0; });
+  rows.forEach(r=>{ meses.forEach(m=>{ gtMes[m]+=(r.porMes[m]||0); }); });
+  const gtTotal = Object.values(gtMes).reduce((s,v)=>s+v,0);
+
+  // Agrupar por PM para franjas
+  const byPM = {};
+  rows.forEach(r => {
+    const pm = r.pm||"(sin PM)";
+    if (!byPM[pm]) byPM[pm] = [];
+    byPM[pm].push(r);
+  });
+
+  let html = "";
+
+  Object.keys(byPM).sort().forEach(pm => {
+    const pmRows = byPM[pm];
+    const pmMes = {}; meses.forEach(m=>{ pmMes[m]=0; });
+    pmRows.forEach(r=>meses.forEach(m=>{ pmMes[m]+=(r.porMes[m]||0); }));
+    const pmTotal = Object.values(pmMes).reduce((s,v)=>s+v,0);
+
+    // Franja de PM
+    html += `<tr class="grp-pm">
+      <td colspan="${ncols}">
+        <span style="font-size:13px">👤 ${esc(pm)}</span>
+        <span style="opacity:.55;font-size:11px;font-weight:400;margin-left:10px">Total: ${fmtPlain(pmTotal)}</span>
+        ${meses.map(m=>pmMes[m]>0?`<span style="opacity:.45;font-size:10px;margin-left:8px">${esc(m)}: ${fmtPlain(pmMes[m])}</span>`:"").join("")}
+      </td>
+    </tr>`;
+
+    // Filas de campaña ordenadas por División → Marca
+    pmRows.sort((a,b)=>{
+      if(a.division!==b.division) return a.division.localeCompare(b.division);
+      return a.marca.localeCompare(b.marca);
+    }).forEach((r,i) => {
+      const cls = i%2===0 ? "r0":"r1";
+      const badge = r.estadoCobro==="Cobrado"
+        ? `<span class="badge b-cob" style="font-size:10px;padding:1px 5px">Cob</span>`
+        : `<span class="badge b-pend" style="font-size:10px;padding:1px 5px">Pend</span>`;
+      html += `<tr class="${cls}">
+        <td>${esc(r.unoPTresP)} ${badge}</td>
+        <td>${esc(r.categoria)}</td>
+        <td>${esc(r.division)}</td>
+        <td style="font-weight:600">${esc(r.marca)}</td>
+        <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis" title="${esc(r.campana)}">${esc(r.campana)}</td>
+        ${meses.map(m=>`<td class="${r.porMes[m]>0?"num-cell":"empty-cell"}">${fmt(r.porMes[m])}</td>`).join("")}
+        <td class="total-cell">${fmtPlain(r.total)}</td>
+      </tr>`;
+    });
+
+    // Subtotal PM
+    html += `<tr class="subtotal-pm">
+      <td colspan="5" style="padding-left:12px">Subtotal ${esc(pm)}</td>
+      ${meses.map(m=>`<td class="num-cell">${fmtPlain(pmMes[m])}</td>`).join("")}
+      <td class="total-cell">${fmtPlain(pmTotal)}</td>
+    </tr>`;
+  });
+
+  // Gran total
+  html += `<tr class="grand-total">
+    <td colspan="5">TOTAL GENERAL</td>
+    ${meses.map(m=>`<td class="num-cell">${fmtPlain(gtMes[m])}</td>`).join("")}
+    <td class="total-cell">${fmtPlain(gtTotal)}</td>
+  </tr>`;
+
+  tbody.innerHTML = html;
+}
+
+// ── Helpers comunes ───────────────────────────────────────────
+function unicosR(fn) { return [...new Set(allData.map(r=>String(fn(r)).trim()).filter(Boolean))].sort(); }
+function unicosRMes() { return [...new Set(allData.map(r=>String(r.mes).trim()).filter(Boolean))].sort(ordenMes); }
+function unicosRSem() { return [...new Set(allData.map(r=>String(r.semTentativa).trim()).filter(Boolean))].sort((a,b)=>numSem(a)-numSem(b)); }
+function unicosP(fn) { return [...new Set(provData.rows.map(r=>String(fn(r)).trim()).filter(Boolean))].sort(); }
+function agr(rows,fn){const m={};rows.forEach(r=>{const k=fn(r)||"(sin val)";if(!m[k])m[k]={count:0,pend:0};m[k].count++;if(r.estadoCobro==="Pendiente")m[k].pend++;});return m;}
+function numSem(s){return parseInt(String(s).match(/^\d+/)?.[0]??"9999");}
+function ordenMes(a,b){const M=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];const p=s=>{const[m,y]=String(s).toLowerCase().split("/");return(parseInt(y)||0)*12+(M.indexOf(m.trim())??0);};return p(a)-p(b);}
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function setLoadingR(){document.getElementById("tbody").innerHTML=`<tr><td colspan="14"><div class="state-box"><span class="spinner"></span>Cargando...</div></td></tr>`;}
+function setLoadingP(){document.getElementById("prov-tbody").innerHTML=`<tr><td colspan="6"><div class="state-box"><span class="spinner"></span>Cargando...</div></td></tr>`;}
+function mostrarError(msg){const b=document.getElementById("error-bar");b.textContent="⚠ "+msg;b.style.display="";document.getElementById("config-bar").style.display="";}
+function ocultarError(){document.getElementById("error-bar").style.display="none";}
+function setTs(){const t=new Date().toLocaleString("es-PE");document.getElementById("ts-label").textContent="↻ "+t;document.getElementById("s-ts").textContent=t;}
+
+init();
+</script>
+</body>
+</html>
