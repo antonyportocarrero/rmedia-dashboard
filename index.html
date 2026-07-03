@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ripley Media · Dashboard</title>
+<style>
+/* ── Reset & base ─────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:        #0f0717;
+  --ink-2:      #3a1f4a;
+  --ink-3:      #6b4880;
+  --surface:    #ffffff;
+  --surface-2:  #f7f4fa;
+  --surface-3:  #f0eaf6;
+  --border:     #e4d9ee;
+  --border-2:   #cdbedd;
+  --purple:     #6d2380;
+  --purple-dk:  #4e1460;
+  --purple-lt:  #9a3db0;
+  --purple-bg:  #f3ecf9;
+  --purple-tint:#faf5fd;
+  --amber:      #92400e;
+  --amber-bg:   #fffbf0;
+  --amber-bdr:  #f0d090;
+  --green:      #065f46;
+  --green-bg:   #f0fdf8;
+  --green-bdr:  #a0ddc8;
+  --red:        #b00020;
+  --red-bg:     #fff0f0;
+  --shadow-sm:  0 1px 3px rgba(80,20,100,.07);
+  --shadow-md:  0 2px 8px rgba(80,20,100,.10);
+  --radius:     6px;
+  --radius-sm:  4px;
+}
+html,body{height:100%;font-family:'Inter',system-ui,sans-serif;font-size:13px;background:var(--surface-3);color:var(--ink)}
+.app{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+
+/* ── Topbar ──────────────────────────────────────────────────── */
+.topbar{
+  background:var(--ink);
+  color:#fff;
+  padding:0 20px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  flex-shrink:0;height:48px;
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+.topbar-brand{display:flex;align-items:center;gap:10px}
+.topbar-logo{
+  width:26px;height:26px;border-radius:5px;
+  background:var(--purple);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:#fff;letter-spacing:.5px;
+  flex-shrink:0;
+}
+.topbar h1{font-size:13px;font-weight:600;letter-spacing:.2px;color:#fff;white-space:nowrap}
+.topbar .sub{font-size:11px;color:rgba(255,255,255,.28);margin-left:6px;font-weight:400}
+.topbar-actions{display:flex;gap:6px;align-items:center}
+.btn-top{
+  font-size:11px;font-family:inherit;padding:4px 10px;
+  border:1px solid rgba(255,255,255,.15);border-radius:var(--radius-sm);
+  background:transparent;color:rgba(255,255,255,.65);cursor:pointer;
+  transition:all .12s;white-space:nowrap;
+}
+.btn-top:hover{background:rgba(255,255,255,.08);color:#fff;border-color:rgba(255,255,255,.3)}
+.btn-top.primary{background:var(--purple);color:#fff;border-color:var(--purple)}
+.btn-top.primary:hover{background:var(--purple-lt);border-color:var(--purple-lt)}
+
+/* ── Tab nav ─────────────────────────────────────────────────── */
+.tabnav{
+  background:var(--ink);
+  display:flex;gap:0;padding:0 20px;flex-shrink:0;
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+.tabnav-btn{
+  font-size:12px;font-family:inherit;font-weight:400;
+  padding:10px 18px;color:rgba(255,255,255,.38);
+  border:none;background:transparent;cursor:pointer;
+  border-bottom:2px solid transparent;
+  transition:all .15s;white-space:nowrap;letter-spacing:.1px;
+}
+.tabnav-btn:hover{color:rgba(255,255,255,.75)}
+.tabnav-btn.active{color:#fff;border-bottom-color:var(--purple);font-weight:500}
+
+/* ── Config / error bars ─────────────────────────────────────── */
+.config-bar{
+  background:var(--amber-bg);border-bottom:1px solid var(--amber-bdr);
+  padding:8px 18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex-shrink:0;
+}
+.config-bar label{font-size:12px;font-weight:600;color:var(--amber);white-space:nowrap}
+.config-bar input{
+  flex:1;min-width:260px;font-size:12px;font-family:inherit;
+  padding:5px 10px;border:1px solid var(--amber-bdr);border-radius:var(--radius-sm);
+  color:#3a2800;background:#fffdf5;outline:none;
+}
+.config-bar input:focus{border-color:var(--amber);box-shadow:0 0 0 2px rgba(146,64,14,.12)}
+.error-bar{
+  background:var(--red-bg);border-bottom:1px solid #f5c0c0;
+  color:var(--red);padding:7px 18px;font-size:12px;display:none;flex-shrink:0;
+}
+
+/* ── Tab pages ───────────────────────────────────────────────── */
+.tab-page{display:none;flex:1;overflow:hidden;flex-direction:column}
+.tab-page.active{display:flex}
+
+/* ── Filter bar ──────────────────────────────────────────────── */
+.filters-bar,.prov-filters{
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  padding:8px 16px;
+  display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;flex-shrink:0;
+}
+.fgroup{display:flex;flex-direction:column;gap:4px}
+.fgroup-label{
+  font-size:10px;font-weight:600;color:var(--purple);
+  text-transform:uppercase;letter-spacing:.6px;
+}
+.chips{display:flex;gap:4px;flex-wrap:wrap;max-width:400px}
+.chip{
+  font-size:11px;font-family:inherit;
+  padding:3px 10px;
+  border:1px solid var(--border-2);border-radius:20px;
+  cursor:pointer;background:var(--surface);color:var(--ink-2);
+  white-space:nowrap;user-select:none;transition:all .1s;
+}
+.chip:hover{background:var(--purple-bg);border-color:var(--purple);color:var(--purple)}
+.chip.active{background:var(--purple);color:#fff;border-color:var(--purple)}
+.chip.disabled{opacity:.3;cursor:default;pointer-events:none}
+.cobro-select,.prov-select{
+  font-size:12px;font-family:inherit;
+  padding:4px 9px;border:1px solid var(--border-2);border-radius:var(--radius-sm);
+  background:var(--surface-2);color:var(--ink);cursor:pointer;outline:none;
+}
+.cobro-select:focus,.prov-select:focus{border-color:var(--purple);box-shadow:0 0 0 2px rgba(109,35,128,.1)}
+.fsep{width:1px;background:var(--border);align-self:stretch;margin:0 2px}
+.btn{
+  font-size:11px;font-family:inherit;
+  padding:4px 11px;border:1px solid var(--border-2);border-radius:var(--radius-sm);
+  background:transparent;color:var(--ink-2);cursor:pointer;white-space:nowrap;transition:all .1s;
+}
+.btn:hover{background:var(--purple-bg);border-color:var(--purple);color:var(--purple)}
+.btn-primary{background:var(--purple);color:#fff;border-color:var(--purple)}
+.btn-primary:hover{background:var(--purple-lt);border-color:var(--purple-lt)}
+
+/* ── Layout: sidebar + content ───────────────────────────────── */
+.main{display:flex;flex:1;overflow:hidden}
+.sidebar{
+  width:240px;flex-shrink:0;
+  background:var(--surface);
+  border-right:1px solid var(--border);
+  overflow-y:auto;display:flex;flex-direction:column;
+}
+.sidebar-section{padding:12px 13px;border-bottom:1px solid var(--border)}
+.sidebar-section h3{
+  font-size:9px;font-weight:700;color:var(--purple);
+  text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px;
+}
+
+/* KPIs */
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.kpi{
+  background:var(--surface-2);border:1px solid var(--border);
+  border-radius:var(--radius);padding:8px 9px;text-align:center;
+  transition:border-color .1s;
+}
+.kpi .num{font-size:20px;font-weight:700;color:var(--purple);line-height:1}
+.kpi .lbl{font-size:9px;color:#aaa;margin-top:2px;font-weight:500;text-transform:uppercase;letter-spacing:.4px}
+.kpi.warn .num{color:var(--amber)}.kpi.warn{background:var(--amber-bg);border-color:var(--amber-bdr)}
+.kpi.ok   .num{color:var(--green)}.kpi.ok  {background:var(--green-bg);border-color:var(--green-bdr)}
+
+/* Cobranding total box */
+.cob-box{
+  margin-top:7px;background:var(--purple-tint);
+  border:1px solid var(--border);border-radius:var(--radius);
+  padding:8px 10px;text-align:center;
+}
+.cob-box .cob-lbl{font-size:9px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
+.cob-box .cob-num{font-size:13px;font-weight:700;color:var(--ink-2);line-height:1}
+.cob-box .cob-monto{font-size:11px;font-weight:600;color:var(--purple);margin-top:2px}
+
+/* Summary list */
+.summary-list{display:flex;flex-direction:column;gap:3px}
+.srow{display:flex;align-items:center;gap:5px;font-size:11px;padding:2px 0}
+.srow .sname{color:var(--ink-2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srow .sbar{width:48px;height:3px;background:var(--border);border-radius:2px;flex-shrink:0}
+.srow .sfill{height:3px;background:var(--purple);border-radius:2px}
+.srow .scnt{font-size:11px;font-weight:600;color:var(--purple);min-width:18px;text-align:right}
+.srow .spend{font-size:10px;color:var(--amber);min-width:22px;text-align:right}
+
+/* ── Table ───────────────────────────────────────────────────── */
+.content{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.table-wrap,.prov-table-wrap{flex:1;overflow:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{
+  background:var(--ink-2);color:rgba(255,255,255,.85);font-weight:500;
+  padding:8px 11px;text-align:left;white-space:nowrap;
+  border-bottom:2px solid var(--purple);
+  position:sticky;top:0;z-index:2;font-size:11px;letter-spacing:.15px;
+}
+td{
+  padding:6px 11px;border-bottom:1px solid var(--border);
+  vertical-align:middle;white-space:nowrap;
+}
+tr.r0 td{background:var(--surface)}
+tr.r1 td{background:var(--surface-2)}
+tr.c0 td{background:#eeebf3}
+tr.c1 td{background:#e7e3ef}
+tr:hover td{background:var(--purple-bg)!important}
+.col-id{color:var(--purple);font-weight:700;border-left:2px solid var(--purple)!important}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:600;letter-spacing:.1px}
+.b-pend{background:#FEF3C7;color:var(--amber)}
+.b-cob {background:#D1FAE5;color:var(--green)}
+.b-sem      {background:var(--purple-bg);color:var(--purple-dk);border:1px solid #dcc8f0}
+.b-sem-soon {background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bdr)}
+.b-sem-late {background:var(--red-bg);color:var(--red);border:1px solid #f5c0c0}
+a.tl{color:var(--purple);text-decoration:none;font-size:11px;font-weight:500}
+a.tl:hover{text-decoration:underline}
+
+/* ── Reporte proveedor table ─────────────────────────────────── */
+.prov-table{width:100%;border-collapse:collapse;font-size:12px}
+.prov-table th{
+  background:var(--ink-2);color:rgba(255,255,255,.85);font-weight:500;
+  padding:8px 11px;text-align:left;white-space:nowrap;
+  border-bottom:2px solid var(--purple);
+  position:sticky;top:0;z-index:2;font-size:11px;letter-spacing:.15px;
+}
+.prov-table th.mes-col {text-align:right;background:#2e1840}
+.prov-table th.total-col{text-align:right;background:var(--ink)}
+.prov-table td{padding:5px 11px;border-bottom:1px solid var(--border);vertical-align:middle;white-space:nowrap}
+.prov-table td.num-cell  {text-align:right;font-variant-numeric:tabular-nums;color:var(--ink-2)}
+.prov-table td.total-cell{text-align:right;font-weight:700;color:var(--purple);background:var(--purple-tint)}
+.prov-table td.empty-cell{color:#d8d0e4;text-align:right}
+
+/* Prov group rows */
+.prov-table tr.grp-pm td{
+  background:var(--ink);color:rgba(255,255,255,.85);
+  font-weight:600;font-size:12px;padding:7px 11px;
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+.prov-table tr.r0 td{background:var(--surface)}
+.prov-table tr.r1 td{background:var(--surface-2)}
+.prov-table tr:hover td{background:var(--purple-bg)!important}
+.prov-table tr.subtotal-pm td{
+  background:var(--purple-bg);font-weight:600;font-size:11px;
+  color:var(--ink-2);border-top:1px solid var(--border-2);
+}
+.prov-table tr.grand-total td{
+  background:var(--purple);color:#fff;font-weight:700;font-size:12px;
+}
+.prov-table tr.grand-total td.num-cell,
+.prov-table tr.grand-total td.total-cell{color:#fff;background:var(--purple)}
+
+/* ── KPI bar Proveedor ──────────────────────────────────────── */
+.prov-kpi-bar{
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:7px 16px;display:flex;gap:0;flex-shrink:0;align-items:stretch;
+  flex-wrap:wrap;
+}
+.prov-kpi-item{
+  display:flex;flex-direction:column;justify-content:center;
+  padding:0 16px;gap:2px;
+}
+.prov-kpi-item:first-child{padding-left:0}
+.prov-kpi-sep{width:1px;background:var(--border);margin:0 2px;align-self:stretch}
+.prov-kpi-num{font-size:15px;font-weight:700;color:var(--purple);line-height:1}
+.prov-kpi-lbl{font-size:9px;font-weight:600;color:#b0a0bc;text-transform:uppercase;letter-spacing:.5px}
+.prov-kpi-pm{display:flex;flex-direction:column;gap:2px;justify-content:center;padding:0 16px}
+.prov-kpi-pm-name{font-size:10px;font-weight:600;color:var(--purple)}
+.prov-kpi-pm-detail{font-size:10px;color:var(--ink-2)}
+.prov-kpi-pm-monto{font-size:10px;color:var(--amber);font-weight:600}
+
+/* ── Statusbar ───────────────────────────────────────────────── */
+.statusbar{
+  background:var(--surface);border-top:1px solid var(--border);
+  padding:5px 18px;display:flex;align-items:center;gap:14px;
+  font-size:11px;color:#b0a0bc;flex-shrink:0;
+}
+.statusbar b{color:var(--purple)}
+
+/* ── Spinner / state ─────────────────────────────────────────── */
+.spinner{
+  display:inline-block;width:13px;height:13px;
+  border:2px solid var(--border);border-top-color:var(--purple);
+  border-radius:50%;animation:spin .6s linear infinite;
+  vertical-align:middle;margin-right:5px;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.state-box{padding:48px;text-align:center;color:#c0b0cc;font-size:13px}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- topbar -->
+<div class="topbar">
+  <div class="topbar-brand">
+    <div class="topbar-logo">RM</div>
+    <h1>Ripley Media</h1>
+    <span class="sub" id="ts-label"></span>
+  </div>
+  <div class="topbar-actions">
+    <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:rgba(255,255,255,.55);margin-right:2px;white-space:nowrap">
+      👤 Analista:
+    </label>
+    <select id="selectAnalista" style="font-size:11px;font-family:inherit;padding:3px 8px;border:1px solid rgba(255,255,255,.18);border-radius:4px;background:#2a0f35;color:#fff;cursor:pointer;outline:none;margin-right:6px">
+      <option value="antony">Antony Portocarrero</option>
+      <option value="alvaro">Álvaro Alarcón</option>
+    </select>
+    <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:#fff;margin-right:4px;cursor:pointer">
+      <input type="checkbox" id="modoPrueba" style="cursor:pointer">
+      Modo prueba (enviar correo a mí)
+    </label>
+    <button class="btn-top primary" onclick="actualizarTab()">↻ Actualizar</button>
+    <button class="btn-top" onclick="toggleConfig()">⚙ URL</button>
+  </div>
+</div>
+
+<!-- tab nav -->
+<div class="tabnav">
+  <button class="tabnav-btn active" onclick="cambiarTab('reporting')">Reporting</button>
+  <button class="tabnav-btn" onclick="cambiarTab('reporte-proveedor')">Reporte Proveedor</button>
+</div>
+
+<!-- config -->
+<div class="config-bar" id="config-bar">
+  <label>🔗 URL Web App:</label>
+  <input type="text" id="api-url" placeholder="https://script.google.com/macros/s/XXXXXX/exec"/>
+  <button class="btn-top primary" onclick="guardarUrl()">Guardar y cargar</button>
+</div>
+<div class="error-bar" id="error-bar"></div>
+
+<!-- ═══ TAB: REPORTING ═══ -->
+<div class="tab-page active" id="tab-reporting">
+  <div class="filters-bar">
+    <div class="fgroup">
+      <div class="fgroup-label">Estado cobro</div>
+      <select class="cobro-select" id="f-cobro" onchange="cargarReporting()">
+        <option value="Pendiente">Pendiente</option>
+        <option value="Cobrado">Cobrado</option>
+        <option value="TODOS">TODOS</option>
+      </select>
+    </div>
+    <div class="fsep"></div>
+    <div class="fgroup">
+      <div class="fgroup-label">PM</div>
+      <div class="chips" id="chips-pm"></div>
+    </div>
+    <div class="fsep"></div>
+    <div class="fgroup">
+      <div class="fgroup-label">1P / 3P</div>
+      <div class="chips" id="chips-1p3p"></div>
+    </div>
+    <div class="fsep"></div>
+    <div class="fgroup">
+      <div class="fgroup-label">División</div>
+      <div class="chips" id="chips-div"></div>
+    </div>
+    <div class="fsep"></div>
+    <div class="fgroup">
+      <div class="fgroup-label">Mes de campaña</div>
+      <div class="chips" id="chips-mes"></div>
+    </div>
+    <div class="fsep"></div>
+    <div class="fgroup">
+      <div class="fgroup-label">Semana tentativa</div>
+      <div class="chips" id="chips-sem"></div>
+    </div>
+    <div class="fsep"></div>
+    <div class="fgroup">
+      <div class="fgroup-label">Marca</div>
+      <select class="cobro-select" id="f-marca" onchange="aplicarFiltros()" style="min-width:140px;max-width:200px">
+        <option value="">Todas</option>
+      </select>
+    </div>
+    <div class="fsep"></div>
+    <button class="btn" onclick="limpiarFiltros()" style="align-self:center;margin-top:12px">✕ Limpiar</button>
+  </div>
+
+  <div class="main">
+    <div class="sidebar">
+      <div class="sidebar-section">
+        <h3>Resumen general</h3>
+        <div class="kpi-grid">
+          <div class="kpi"><div class="num" id="k-total">—</div><div class="lbl">Campañas</div></div>
+          <div class="kpi warn"><div class="num" id="k-pend">—</div><div class="lbl">Pend. de cobro</div></div>
+          <div class="kpi ok"><div class="num" id="k-cob">—</div><div class="lbl">Cobradas</div></div>
+          <div class="kpi"><div class="num" id="k-sems">—</div><div class="lbl">Semanas</div></div>
+        </div>
+        <div class="cob-box">
+          <div class="cob-lbl">Total Cobranding</div>
+          <div class="cob-num" id="k-cob-num">—</div>
+          <div class="cob-monto" id="k-cob-monto">—</div>
+        </div>
+      </div>
+      <div class="sidebar-section"><h3>Por semana tentativa</h3><div class="summary-list" id="sum-sem"></div></div>
+      <div class="sidebar-section"><h3>Por PM</h3><div class="summary-list" id="sum-pm"></div></div>
+      <div class="sidebar-section"><h3>Por división</h3><div class="summary-list" id="sum-div"></div></div>
+      <div class="sidebar-section" style="border-bottom:none"><h3>Por departamento</h3><div class="summary-list" id="sum-dep"></div></div>
+    </div>
+    <div class="content">
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>ID Plan</th><th>Mes campaña</th><th>Categoría</th><th>1P/3P</th>
+            <th>División</th><th>Departamento</th><th>Marca</th><th>Campaña</th>
+            <th>Trello</th><th>Cobranding</th><th>Sem tentativa</th>
+            <th>Reporte medios</th><th>Estado cobro</th><th>PM Ripley media</th>
+            <th>Acción</th>
+          </tr></thead>
+          <tbody id="tbody">
+            <tr><td colspan="15"><div class="state-box">Ingresa la URL de tu Web App para comenzar.</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TAB: REPORTE PROVEEDOR ═══ -->
+<div class="tab-page" id="tab-reporte-proveedor">
+  <div class="prov-filters">
+    <div class="fgroup">
+      <div class="fgroup-label">Estado cobro</div>
+      <select class="cobro-select" id="pf-cobro" onchange="aplicarFiltrosProv()">
+        <option value="">Todos</option>
+        <option value="Pendiente">Pendiente</option>
+        <option value="Cobrado">Cobrado</option>
+      </select>
+    </div>
+    <div class="fsep"></div>
+    <div class="fgroup">
+      <div class="fgroup-label">PM</div>
+      <div class="chips" id="pchips-pm"></div>
+    </div>
+    <div class="fsep"></div>
+    <div class="fgroup">
+      <div class="fgroup-label">1P / 3P</div>
+      <div class="chips" id="pchips-1p3p"></div>
+    </div>
+    <div class="fsep"></div>
+    <div class="fgroup">
+      <div class="fgroup-label">División</div>
+      <div class="chips" id="pchips-div"></div>
+    </div>
+    <div class="fsep"></div>
+    <div class="fgroup">
+      <div class="fgroup-label">Mes de campaña</div>
+      <div class="chips" id="pchips-mes"></div>
+    </div>
+    <div class="fsep"></div>
+    <div class="fgroup">
+      <div class="fgroup-label">Marca</div>
+      <select class="cobro-select" id="pf-marca" onchange="aplicarFiltrosProv()" style="min-width:140px;max-width:200px">
+        <option value="">Todas</option>
+      </select>
+    </div>
+    <div class="fsep"></div>
+    <button class="btn" onclick="limpiarFiltrosProv()" style="align-self:center;margin-top:12px">✕ Limpiar</button>
+  </div>
+  <div class="prov-kpi-bar" id="prov-kpi-bar">
+    <div class="prov-kpi-item">
+      <span class="prov-kpi-num" id="pk-planes">—</span>
+      <span class="prov-kpi-lbl">Planes</span>
+    </div>
+    <div class="prov-kpi-sep"></div>
+    <div class="prov-kpi-item">
+      <span class="prov-kpi-num" id="pk-total">—</span>
+      <span class="prov-kpi-lbl">Total cobranding</span>
+    </div>
+    <div class="prov-kpi-sep"></div>
+    <div id="pk-pm-breakdown" style="display:flex;gap:0;align-items:stretch"></div>
+  </div>
+  <div class="prov-table-wrap">
+    <table class="prov-table" id="prov-table">
+      <thead id="prov-thead"></thead>
+      <tbody id="prov-tbody">
+        <tr><td colspan="6"><div class="state-box">Ingresa la URL de tu Web App para comenzar.</div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- statusbar -->
+<div class="statusbar">
+  <span id="s-info">—</span>
+  <span id="s-filters" style="color:#b08ac0"></span>
+  <span style="margin-left:auto" id="s-ts"></span>
+</div>
+
+</div><!-- /app -->
+<script>
+const LS_KEY = "rmedia_v4";
+let tabActual = "reporting";
+let allData = [];
+let provData = { rows:[], meses:[] };
+
+// sel reporting
+const sel = { pm: new Set(), "1p3p": new Set(), div: new Set(), mes: new Set(), sem: new Set() };
+// sel proveedor
+const psel = { pm: new Set(), "1p3p": new Set(), div: new Set(), mes: new Set() };
+
+// ── Init ──────────────────────────────────────────────────────
+function init() {
+  const saved = localStorage.getItem(LS_KEY);
+  if (saved) {
+    document.getElementById("api-url").value = saved;
+    document.getElementById("config-bar").style.display = "none";
+    cargarReporting();
+  }
+}
+
+function toggleConfig() {
+  const b = document.getElementById("config-bar");
+  b.style.display = b.style.display === "none" ? "" : "none";
+}
+
+function guardarUrl() {
+  const url = document.getElementById("api-url").value.trim();
+  if (!url.startsWith("https://")) { alert("La URL debe comenzar con https://"); return; }
+  localStorage.setItem(LS_KEY, url);
+  document.getElementById("config-bar").style.display = "none";
+  actualizarTab();
+}
+
+function cambiarTab(tab) {
+  tabActual = tab;
+  document.querySelectorAll(".tabnav-btn").forEach((b,i) => {
+    b.classList.toggle("active", (i===0 && tab==="reporting") || (i===1 && tab==="reporte-proveedor"));
+  });
+  document.querySelectorAll(".tab-page").forEach(p => p.classList.remove("active"));
+  document.getElementById("tab-" + tab).classList.add("active");
+  // Solo re-renderiza con datos en memoria; fetch solo si no hay datos aún
+  if (tab === "reporting") {
+    if (allData.length) aplicarFiltros(); else cargarReporting();
+  } else {
+    if (provData.rows.length) aplicarFiltrosProv(); else cargarReporteProveedor();
+  }
+}
+
+function actualizarTab() {
+  if (tabActual === "reporting") cargarReporting();
+  else cargarReporteProveedor();
+}
+
+// ══════════════════════════════════════════════════════════════
+// REPORTING
+// ══════════════════════════════════════════════════════════════
+async function cargarReporting() {
+  const url = localStorage.getItem(LS_KEY);
+  if (!url) { document.getElementById("config-bar").style.display = ""; return; }
+  const cobro = document.getElementById("f-cobro").value;
+  setLoadingR();
+  ocultarError();
+  Object.keys(sel).forEach(k => sel[k].clear());
+  try {
+    const resp = await fetch(`${url}?endpoint=reporting&cobro=${encodeURIComponent(cobro)}`);
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    const json = await resp.json();
+    if (json.error) throw new Error(json.error);
+    allData = json.rows || [];
+    construirChips();
+    aplicarFiltros();
+    setTs();
+  } catch(err) { mostrarError(err.message); }
+}
+
+function construirChips() {
+  renderChips("chips-pm",   unicosR(r => r.pmRipley),   "pm");
+  renderChips("chips-1p3p", unicosR(r => r.unoPTresP),  "1p3p");
+  renderChips("chips-div",  unicosR(r => r.division),   "div");
+  renderChips("chips-mes",  unicosRMes(),                "mes");
+  renderChips("chips-sem",  unicosRSem(),                "sem");
+  // Poblar select de marca
+  const marcas = unicosR(r => r.marca);
+  const fMarca = document.getElementById("f-marca");
+  const cur = fMarca.value;
+  fMarca.innerHTML = `<option value="">Todas</option>` + marcas.map(m=>`<option value="${esc(m)}"${m===cur?" selected":""}>${esc(m)}</option>`).join("");
+}
+
+function renderChips(cid, vals, dim) {
+  const fMarca = document.getElementById("f-marca") ? document.getElementById("f-marca").value : "";
+  const disp = dispR(dim, fMarca);
+  document.getElementById(cid).innerHTML = vals.map(v => {
+    const act = sel[dim].has(v);
+    const dis = !disp.has(v) && !act;
+    return `<span class="chip${act?" active":""}${dis?" disabled":""}" onclick="toggleChip('${dim}','${esc(v)}')">${esc(v)}</span>`;
+  }).join("");
+}
+
+function toggleChip(dim, val) {
+  if (sel[dim].has(val)) sel[dim].delete(val); else sel[dim].add(val);
+  aplicarFiltros();
+}
+
+function dispR(excluir, fMarca) {
+  const pre = allData.filter(r => pasaR(r, excluir, fMarca));
+  const s = new Set();
+  pre.forEach(r => { const v = valR(r, excluir); if(v) s.add(v); });
+  return s;
+}
+
+function valR(r, dim) {
+  if (dim==="pm")   return String(r.pmRipley).trim();
+  if (dim==="1p3p") return String(r.unoPTresP).trim();
+  if (dim==="div")  return String(r.division).trim();
+  if (dim==="mes")  return String(r.mes).trim();
+  if (dim==="sem")  return String(r.semTentativa).trim();
+}
+
+function pasaR(r, excluir, fMarca) {
+  if (excluir!=="pm"   && sel.pm.size   >0 && !sel.pm.has(String(r.pmRipley).trim()))     return false;
+  if (excluir!=="1p3p" && sel["1p3p"].size>0 && !sel["1p3p"].has(String(r.unoPTresP).trim())) return false;
+  if (excluir!=="div"  && sel.div.size  >0 && !sel.div.has(String(r.division).trim()))    return false;
+  if (excluir!=="mes"  && sel.mes.size  >0 && !sel.mes.has(String(r.mes).trim()))         return false;
+  if (excluir!=="sem"  && sel.sem.size  >0 && !sel.sem.has(String(r.semTentativa).trim())) return false;
+  if (excluir!=="marca" && fMarca && String(r.marca).trim() !== fMarca) return false;
+  return true;
+}
+
+function actualizarSelectMarca() {
+  const marcasDisp = new Set(
+    allData.filter(r => pasaR(r, "marca", "")).map(r => String(r.marca).trim()).filter(Boolean)
+  );
+  const fMarca = document.getElementById("f-marca");
+  const cur = fMarca.value;
+  const curValida = !cur || marcasDisp.has(cur);
+  fMarca.innerHTML = `<option value="">Todas</option>` +
+    [...marcasDisp].sort().map(m =>
+      `<option value="${m}"${m === (curValida ? cur : "") ? " selected" : ""}>${m}</option>`
+    ).join("");
+  return curValida ? cur : "";
+}
+
+function aplicarFiltros() {
+  const fMarca = actualizarSelectMarca();
+  ["pm","1p3p","div","mes","sem"].forEach(dim => {
+    const disp = dispR(dim, fMarca);
+    const cid = {pm:"chips-pm","1p3p":"chips-1p3p",div:"chips-div",mes:"chips-mes",sem:"chips-sem"}[dim];
+    document.getElementById(cid).querySelectorAll(".chip").forEach(c => {
+      const v = c.textContent;
+      const act = sel[dim].has(v);
+      c.className = "chip"+(act?" active":"")+(!disp.has(v)&&!act?" disabled":"");
+    });
+  });
+  const filtered = allData.filter(r => pasaR(r, null, fMarca));
+  const nAct = ["pm","1p3p","div","mes","sem"].reduce((s,d)=>s+sel[d].size,0) + (fMarca?1:0);
+  document.getElementById("s-filters").textContent = nAct ? `${nAct} filtro(s) activo(s)` : "";
+  renderTabla(filtered);
+  renderSidebar(filtered);
+  document.getElementById("s-info").innerHTML = `Mostrando <b>${filtered.length}</b> de <b>${allData.length}</b> campañas`;
+}
+
+function limpiarFiltros() {
+  Object.keys(sel).forEach(k => sel[k].clear());
+  document.getElementById("f-marca").value = "";
+  aplicarFiltros();
+}
+
+function renderTabla(rows) {
+  const tbody = document.getElementById("tbody");
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="15"><div class="state-box">Sin campañas con los filtros actuales.</div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = rows.map((r,i) => {
+    const esCob = r.estadoCobro==="Cobrado";
+    const cls = esCob?(i%2===0?"c0":"c1"):(i%2===0?"r0":"r1");
+    const badgeE = esCob?`<span class="badge b-cob">Cobrado</span>`:`<span class="badge b-pend">Pendiente</span>`;
+    const trCell = r.trello?`<a class="tl" href="${esc(String(r.trello))}" target="_blank">↗ Ver</a>`:`<span style="color:#ddd">—</span>`;
+    const cobStr = r.cobranding>0?`S/ ${Number(r.cobranding).toLocaleString("es-PE",{minimumFractionDigits:2,maximumFractionDigits:2})}`:
+      `<span style="color:#ccc">—</span>`;
+    const yaEnviado = String(r.reporteMedios).trim() === "Enviado";
+    const accionCell = yaEnviado
+      ? `<span style="color:#a0d0b0;font-size:10px">✓ Enviado</span>`
+      : `<div style="display:flex;gap:4px;align-items:center">
+           <input type="text" placeholder="Link reporte" style="width:110px;font-size:10px;padding:3px 5px;border:1px solid #ddd0e8;border-radius:4px" onkeydown="if(event.key==='Enter'){event.preventDefault();this.nextElementSibling.click();}">
+           <button class="btn" style="font-size:10px;padding:3px 8px" onclick="marcarEnviado('${esc(String(r.idPlan))}', this)">Enviar</button>
+         </div>`;
+    return `<tr class="${cls}">
+      <td class="col-id">${esc(String(r.idPlan))}</td>
+      <td>${esc(String(r.mes))}</td><td>${esc(String(r.categoria))}</td>
+      <td>${esc(String(r.unoPTresP))}</td><td>${esc(String(r.division))}</td>
+      <td>${esc(String(r.departamento))}</td>
+      <td style="font-weight:500">${esc(String(r.marca))}</td>
+      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis" title="${esc(String(r.campana))}">${esc(String(r.campana))}</td>
+      <td>${trCell}</td><td>${cobStr}</td>
+      <td><span class="badge ${semBadgeClass(r.semTentativa)}">${esc(String(r.semTentativa))}</span></td>
+      <td style="color:#999;font-size:10px">${esc(String(r.reporteMedios))}</td>
+      <td>${badgeE}</td><td>${esc(String(r.pmRipley))}</td>
+      <td>${accionCell}</td>
+    </tr>`;
+  }).join("");
+}
+
+async function marcarEnviado(idPlan, btn) {
+  const url = localStorage.getItem(LS_KEY);
+  if (!url) return;
+
+  const input = btn.previousElementSibling;
+  const link  = input ? input.value.trim() : "";
+
+  if (!link) {
+    alert("Pega el link del reporte antes de marcar como enviado.");
+    input?.focus();
+    return;
+  }
+
+  btn.disabled = true;
+  input.disabled = true;
+  btn.textContent = "Enviando...";
+
+  const modoPrueba  = document.getElementById("modoPrueba")?.checked ? "true" : "false";
+  const remitente   = document.getElementById("selectAnalista")?.value || "antony";
+
+  try {
+    const resp = await fetch(`${url}?endpoint=marcar-enviado&idPlan=${encodeURIComponent(idPlan)}&link=${encodeURIComponent(link)}&test=${modoPrueba}&remitente=${encodeURIComponent(remitente)}`);
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    const json = await resp.json();
+    if (!json.ok) throw new Error(json.msg || "No se pudo marcar.");
+
+    // Actualizar en memoria sin necesidad de recargar todo
+    const row = allData.find(r => String(r.idPlan).trim() === idPlan);
+    if (row) row.reporteMedios = "Enviado";
+
+    aplicarFiltros(); // re-renderiza tabla y sidebar con el dato actualizado
+  } catch(err) {
+    alert("Error: " + err.message);
+    btn.disabled = false;
+    input.disabled = false;
+    btn.textContent = "Enviar";
+  }
+}
+
+function renderSidebar(rows) {
+  const pend = rows.filter(r=>r.estadoCobro==="Pendiente").length;
+  const cob  = rows.filter(r=>r.estadoCobro==="Cobrado").length;
+  const sems = new Set(rows.map(r=>String(r.semTentativa).trim()).filter(Boolean)).size;
+  document.getElementById("k-total").textContent = rows.length;
+  document.getElementById("k-pend").textContent  = pend;
+  document.getElementById("k-cob").textContent   = cob;
+  document.getElementById("k-sems").textContent  = sems;
+  // Cobranding
+  const cobRows = rows.filter(r=>r.cobranding>0);
+  const cobMonto = cobRows.reduce((s,r)=>s+Number(r.cobranding),0);
+  document.getElementById("k-cob-num").textContent = cobRows.length + " campaña" + (cobRows.length!==1?"s":"");
+  document.getElementById("k-cob-monto").textContent = cobMonto>0
+    ? "S/ "+cobMonto.toLocaleString("es-PE",{minimumFractionDigits:2,maximumFractionDigits:2})
+    : "S/ 0.00";
+  const bySem = agr(rows, r=>String(r.semTentativa).trim());
+  renderList("sum-sem", Object.keys(bySem).sort((a,b)=>numSem(a)-numSem(b)), bySem);
+  const apm=agr(rows,r=>String(r.pmRipley).trim()); renderList("sum-pm",Object.keys(apm).sort(),apm);
+  const adiv=agr(rows,r=>String(r.division).trim()); renderList("sum-div",Object.keys(adiv).sort(),adiv);
+  const adep=agr(rows,r=>String(r.departamento).trim()); renderList("sum-dep",Object.keys(adep).sort(),adep);
+}
+
+function renderList(id, keys, map) {
+  const max = Math.max(1,...keys.map(k=>map[k].count));
+  document.getElementById(id).innerHTML = keys.map(k=>{
+    const {count,pend}=map[k];
+    return `<div class="srow">
+      <span class="sname" title="${esc(k)}">${esc(k)}</span>
+      <span class="spend">${pend>0?"("+pend+"P)":""}</span>
+      <div class="sbar"><div class="sfill" style="width:${Math.round(count/max*100)}%"></div></div>
+      <span class="scnt">${count}</span>
+    </div>`;
+  }).join("")||`<div style="font-size:10px;color:#ccc;padding:3px 0">Sin datos</div>`;
+}
+
+// ══════════════════════════════════════════════════════════════
+// REPORTE PROVEEDOR
+// ══════════════════════════════════════════════════════════════
+async function cargarReporteProveedor() {
+  const url = localStorage.getItem(LS_KEY);
+  if (!url) { document.getElementById("config-bar").style.display = ""; return; }
+  setLoadingP();
+  ocultarError();
+  Object.keys(psel).forEach(k => psel[k].clear());
+  try {
+    const resp = await fetch(`${url}?endpoint=reporte-proveedor`);
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    const json = await resp.json();
+    if (json.error) throw new Error(json.error);
+    provData = { rows: json.rows||[], meses: json.meses||[] };
+    construirChipsProv();
+    aplicarFiltrosProv();
+    setTs();
+  } catch(err) { mostrarError(err.message); }
+}
+
+function construirChipsProv() {
+  renderChipsProv("pchips-pm",   unicosP(r=>r.pm),        "pm");
+  renderChipsProv("pchips-1p3p", unicosP(r=>r.unoPTresP), "1p3p");
+  renderChipsProv("pchips-div",  unicosP(r=>r.division),  "div");
+  renderChipsProvMes("pchips-mes", provData.meses);
+  // Poblar select de marca proveedor
+  const marcas = unicosP(r=>r.marca);
+  const pfMarca = document.getElementById("pf-marca");
+  const cur = pfMarca.value;
+  pfMarca.innerHTML = `<option value="">Todas</option>` + marcas.map(m=>`<option value="${esc(m)}"${m===cur?" selected":""}>${esc(m)}</option>`).join("");
+}
+
+function renderChipsProv(cid, vals, dim) {
+  const fCobro = document.getElementById("pf-cobro") ? document.getElementById("pf-cobro").value : "";
+  const pfMarca = document.getElementById("pf-marca") ? document.getElementById("pf-marca").value : "";
+  const disp = dispP(dim, fCobro, pfMarca);
+  document.getElementById(cid).innerHTML = vals.map(v=>{
+    const act = psel[dim].has(v);
+    const dis = !disp.has(v)&&!act;
+    return `<span class="chip${act?" active":""}${dis?" disabled":""}" onclick="toggleChipProv('${dim}','${esc(v)}')">${esc(v)}</span>`;
+  }).join("");
+}
+
+function renderChipsProvMes(cid, meses) {
+  document.getElementById(cid).innerHTML = meses.map(v => {
+    const act = psel.mes.has(v);
+    return `<span class="chip${act?" active":""}" onclick="toggleChipProv('mes','${esc(v)}')">${esc(v)}</span>`;
+  }).join("");
+}
+
+function toggleChipProv(dim, val) {
+  if (psel[dim].has(val)) psel[dim].delete(val); else psel[dim].add(val);
+  aplicarFiltrosProv();
+}
+
+function dispP(excluir, fCobro, pfMarca) {
+  const pre = provData.rows.filter(r=>pasaP(r,excluir,fCobro,pfMarca));
+  const s=new Set(); pre.forEach(r=>{ const v=valP(r,excluir); if(v) s.add(v); }); return s;
+}
+
+function valP(r,dim) {
+  if(dim==="pm")   return String(r.pm).trim();
+  if(dim==="1p3p") return String(r.unoPTresP).trim();
+  if(dim==="div")  return String(r.division).trim();
+}
+
+function pasaP(r, excluir, fCobro, pfMarca) {
+  if(fCobro && String(r.estadoCobro).trim() !== fCobro) return false;
+  if(excluir!=="pm"   && psel.pm.size>0   && !psel.pm.has(String(r.pm).trim()))        return false;
+  if(excluir!=="1p3p" && psel["1p3p"].size>0 && !psel["1p3p"].has(String(r.unoPTresP).trim())) return false;
+  if(excluir!=="div"  && psel.div.size>0  && !psel.div.has(String(r.division).trim())) return false;
+  if(excluir!=="marca" && pfMarca && String(r.marca).trim() !== pfMarca) return false;
+  if(excluir!=="mes" && psel.mes.size>0) {
+    const rowMeses = Object.keys(r.porMes).filter(m => (r.porMes[m]||0) > 0);
+    if (!rowMeses.some(m => psel.mes.has(m))) return false;
+  }
+  return true;
+}
+
+function actualizarSelectMarcaProv() {
+  const fCobro = document.getElementById("pf-cobro").value;
+  const marcasDisp = new Set(
+    provData.rows.filter(r => pasaP(r, "marca", fCobro, "")).map(r => String(r.marca).trim()).filter(Boolean)
+  );
+  const pfMarca = document.getElementById("pf-marca");
+  const cur = pfMarca.value;
+  const curValida = !cur || marcasDisp.has(cur);
+  pfMarca.innerHTML = `<option value="">Todas</option>` +
+    [...marcasDisp].sort().map(m =>
+      `<option value="${m}"${m === (curValida ? cur : "") ? " selected" : ""}>${m}</option>`
+    ).join("");
+  return curValida ? cur : "";
+}
+
+function aplicarFiltrosProv() {
+  const fCobro = document.getElementById("pf-cobro").value;
+  const pfMarca = actualizarSelectMarcaProv();
+  ["pm","1p3p","div"].forEach(dim=>{
+    const disp=dispP(dim,fCobro,pfMarca);
+    const cid={"pm":"pchips-pm","1p3p":"pchips-1p3p","div":"pchips-div"}[dim];
+    document.getElementById(cid).querySelectorAll(".chip").forEach(c=>{
+      const v=c.textContent; const act=psel[dim].has(v);
+      c.className="chip"+(act?" active":"")+(!disp.has(v)&&!act?" disabled":"");
+    });
+  });
+  // mes chips — sin estado disabled
+  document.getElementById("pchips-mes").querySelectorAll(".chip").forEach(c=>{
+    c.className="chip"+(psel.mes.has(c.textContent)?" active":"");
+  });
+  const filtered = provData.rows.filter(r=>pasaP(r,null,fCobro,pfMarca));
+
+  // Calcular meses activos solo de las filas filtradas
+  const mesesActivos = [...new Set(
+    filtered.flatMap(r => Object.keys(r.porMes).filter(m => r.porMes[m] > 0))
+  )].sort(ordenMes);
+
+  renderKpisProv(filtered);
+  renderTablaProveedor(filtered, mesesActivos);
+  document.getElementById("s-info").innerHTML = `<b>${filtered.length}</b> líneas · Reporte Medios = Enviado, Reporte Proveedor = No enviado`;
+}
+
+function limpiarFiltrosProv() {
+  Object.keys(psel).forEach(k=>psel[k].clear());
+  document.getElementById("pf-cobro").value = "";
+  document.getElementById("pf-marca").value = "";
+  aplicarFiltrosProv();
+}
+
+function renderKpisProv(filtered) {
+  const total = filtered.reduce((s,r) => s + (r.total||0), 0);
+  const fmtMonto = v => "S/ " + v.toLocaleString("es-PE", {minimumFractionDigits:2, maximumFractionDigits:2});
+
+  document.getElementById("pk-planes").textContent = filtered.length;
+  document.getElementById("pk-total").textContent  = fmtMonto(total);
+
+  // Desglose por PM
+  const byPM = {};
+  filtered.forEach(r => {
+    const pm = r.pm || "(sin PM)";
+    if (!byPM[pm]) byPM[pm] = { count:0, total:0 };
+    byPM[pm].count++;
+    byPM[pm].total += (r.total||0);
+  });
+
+  document.getElementById("pk-pm-breakdown").innerHTML =
+    Object.keys(byPM).sort().map(pm => `
+      <div class="prov-kpi-sep"></div>
+      <div class="prov-kpi-pm">
+        <span class="prov-kpi-pm-name">👤 ${esc(pm)}</span>
+        <span class="prov-kpi-pm-detail">${byPM[pm].count} plan${byPM[pm].count!==1?"es":""}</span>
+        <span class="prov-kpi-pm-monto">${fmtMonto(byPM[pm].total)}</span>
+      </div>
+    `).join("");
+}
+
+function renderTablaProveedor(rows, meses) {
+  const thead = document.getElementById("prov-thead");
+  const tbody  = document.getElementById("prov-tbody");
+
+  if (!rows.length) {
+    thead.innerHTML = "";
+    tbody.innerHTML = `<tr><td colspan="6"><div class="state-box">Sin datos con los filtros actuales.</div></td></tr>`;
+    document.getElementById("s-info").innerHTML = "Sin datos";
+    return;
+  }
+
+  const ncols = 8 + meses.length + 1; // ID Plan + 1P/3P + Cat + Div + Depto + Marca + Campaña + Reporte + meses + Total
+
+  // Header
+  thead.innerHTML = `<tr>
+    <th>ID Plan</th><th>1P/3P</th><th>Categoría</th><th>División</th><th>Departamento</th><th>Marca</th><th>Campaña</th><th>Reporte</th>
+    ${meses.map(m=>`<th class="mes-col">${esc(m)}</th>`).join("")}
+    <th class="total-col">Total</th>
+  </tr>`;
+
+  const fmt = v => v>0 ? `S/ ${v.toLocaleString("es-PE",{minimumFractionDigits:2,maximumFractionDigits:2})}` : `<span style="color:#ddd">—</span>`;
+  const fmtPlain = v => v>0 ? `S/ ${v.toLocaleString("es-PE",{minimumFractionDigits:2,maximumFractionDigits:2})}` : "";
+
+  // Totales globales
+  const gtMes = {}; meses.forEach(m=>{ gtMes[m]=0; });
+  rows.forEach(r=>{ meses.forEach(m=>{ gtMes[m]+=(r.porMes[m]||0); }); });
+  const gtTotal = Object.values(gtMes).reduce((s,v)=>s+v,0);
+
+  // Agrupar por PM para franjas
+  const byPM = {};
+  rows.forEach(r => {
+    const pm = r.pm||"(sin PM)";
+    if (!byPM[pm]) byPM[pm] = [];
+    byPM[pm].push(r);
+  });
+
+  let html = "";
+
+  Object.keys(byPM).sort().forEach(pm => {
+    const pmRows = byPM[pm];
+    const pmMes = {}; meses.forEach(m=>{ pmMes[m]=0; });
+    pmRows.forEach(r=>meses.forEach(m=>{ pmMes[m]+=(r.porMes[m]||0); }));
+    const pmTotal = Object.values(pmMes).reduce((s,v)=>s+v,0);
+
+    // Franja de PM
+    html += `<tr class="grp-pm">
+      <td colspan="${ncols}">
+        <span style="font-size:13px">👤 ${esc(pm)}</span>
+        <span style="opacity:.55;font-size:11px;font-weight:400;margin-left:10px">Total: ${fmtPlain(pmTotal)}</span>
+        ${meses.map(m=>pmMes[m]>0?`<span style="opacity:.45;font-size:10px;margin-left:8px">${esc(m)}: ${fmtPlain(pmMes[m])}</span>`:"").join("")}
+      </td>
+    </tr>`;
+
+    // Filas de campaña ordenadas por División → Marca
+    pmRows.sort((a,b)=>{
+      if(a.division!==b.division) return a.division.localeCompare(b.division);
+      return a.marca.localeCompare(b.marca);
+    }).forEach((r,i) => {
+      const cls = i%2===0 ? "r0":"r1";
+      const badge = r.estadoCobro==="Cobrado"
+        ? `<span class="badge b-cob" style="font-size:10px;padding:1px 5px">Cob</span>`
+        : `<span class="badge b-pend" style="font-size:10px;padding:1px 5px">Pend</span>`;
+      html += `<tr class="${cls}">
+        <td style="color:var(--purple);font-weight:600;font-size:10px;border-left:2px solid var(--purple)">${esc(r.idPlan||'')}</td>
+        <td>${esc(r.unoPTresP)} ${badge}</td>
+        <td>${esc(r.categoria)}</td>
+        <td>${esc(r.division)}</td>
+        <td>${esc(r.departamento||'')}</td>
+        <td style="font-weight:600">${esc(r.marca)}</td>
+        <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis" title="${esc(r.campana)}">${esc(r.campana)}</td>
+        <td>${r.linkReporte ? `<a href="${esc(r.linkReporte)}" target="_blank" style="color:var(--purple);font-size:11px;font-weight:500;text-decoration:none" title="${esc(r.linkReporte)}">↗ Ver</a>` : `<span style="color:#ddd">—</span>`}</td>
+        ${meses.map(m=>`<td class="${r.porMes[m]>0?"num-cell":"empty-cell"}">${fmt(r.porMes[m])}</td>`).join("")}
+        <td class="total-cell">${fmtPlain(r.total)}</td>
+      </tr>`;
+    });
+
+    // Subtotal PM
+    html += `<tr class="subtotal-pm">
+      <td colspan="8" style="padding-left:12px">Subtotal ${esc(pm)}</td>
+      ${meses.map(m=>`<td class="num-cell">${fmtPlain(pmMes[m])}</td>`).join("")}
+      <td class="total-cell">${fmtPlain(pmTotal)}</td>
+    </tr>`;
+  });
+
+  // Gran total
+  html += `<tr class="grand-total">
+    <td colspan="8">TOTAL GENERAL</td>
+    ${meses.map(m=>`<td class="num-cell">${fmtPlain(gtMes[m])}</td>`).join("")}
+    <td class="total-cell">${fmtPlain(gtTotal)}</td>
+  </tr>`;
+
+  tbody.innerHTML = html;
+}
+
+// ── Helpers comunes ───────────────────────────────────────────
+function unicosR(fn) { return [...new Set(allData.map(r=>String(fn(r)).trim()).filter(Boolean))].sort(); }
+function unicosRMes() { return [...new Set(allData.map(r=>String(r.mes).trim()).filter(Boolean))].sort(ordenMes); }
+function unicosRSem() { return [...new Set(allData.map(r=>String(r.semTentativa).trim()).filter(Boolean))].sort((a,b)=>numSem(a)-numSem(b)); }
+function unicosP(fn) { return [...new Set(provData.rows.map(r=>String(fn(r)).trim()).filter(Boolean))].sort(); }
+function agr(rows,fn){const m={};rows.forEach(r=>{const k=fn(r)||"(sin val)";if(!m[k])m[k]={count:0,pend:0};m[k].count++;if(r.estadoCobro==="Pendiente")m[k].pend++;});return m;}
+function numSem(s){return parseInt(String(s).match(/^\d+/)?.[0]??"9999");}
+
+function semanaActual() {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), 0, 1);
+  return Math.ceil(((now - start) / 86400000 + start.getDay() + 1) / 7);
+}
+
+function semBadgeClass(sem) {
+  const n = numSem(sem);
+  if (n === 9999) return "b-sem";
+  const curr = semanaActual();
+  if (n <= curr)     return "b-sem-late"; // esta semana o ya pasó — rojo
+  if (n <= curr + 2) return "b-sem-soon"; // próximas 2 semanas — amarillo
+  return "b-sem";                          // más de 2 semanas — normal
+}
+function ordenMes(a,b){const M=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];const p=s=>{const[m,y]=String(s).toLowerCase().split("/");return(parseInt(y)||0)*12+(M.indexOf(m.trim())??0);};return p(a)-p(b);}
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function setLoadingR(){document.getElementById("tbody").innerHTML=`<tr><td colspan="15"><div class="state-box"><span class="spinner"></span>Cargando...</div></td></tr>`;}
+function setLoadingP(){document.getElementById("prov-tbody").innerHTML=`<tr><td colspan="6"><div class="state-box"><span class="spinner"></span>Cargando...</div></td></tr>`;}
+function mostrarError(msg){const b=document.getElementById("error-bar");b.textContent="⚠ "+msg;b.style.display="";document.getElementById("config-bar").style.display="";}
+function ocultarError(){document.getElementById("error-bar").style.display="none";}
+function setTs(){const t=new Date().toLocaleString("es-PE");document.getElementById("ts-label").textContent="↻ "+t;document.getElementById("s-ts").textContent=t;}
+
+init();
+</script>
+</body>
+</html>
