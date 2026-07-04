@@ -241,7 +241,7 @@ tr.r1 td{background:var(--surface-2)}
 tr.c0 td{background:#FFF7ED}
 tr.c1 td{background:#FEF3C7}
 tr:hover td{background:var(--purple-bg)!important}
-.col-id{color:var(--purple);font-weight:700;border-left:3px solid var(--purple)!important}
+.col-id{color:var(--purple);font-weight:700;border-left:3px solid var(--brand-pink)!important}
 
 /* Badges */
 .badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;letter-spacing:.1px}
@@ -268,7 +268,7 @@ a.tl:hover{text-decoration:underline;color:var(--purple-lt)}
 .prov-table td.total-cell{text-align:right;font-weight:700;color:var(--purple);background:var(--purple-tint)}
 .prov-table td.empty-cell{color:#CBD5E1;text-align:right}
 .prov-table tr.grp-pm td{
-  background:linear-gradient(90deg,#1E0B2C,#3B1063);color:rgba(255,255,255,.9);
+  background:linear-gradient(90deg,#8B0057,#3B1063);color:rgba(255,255,255,.9);
   font-weight:600;font-size:12px;padding:8px 12px;
 }
 .prov-table tr.r0 td{background:#fff}
@@ -1052,7 +1052,7 @@ function renderTablaProveedor(rows, meses) {
         <td>${esc(r.departamento||'')}</td>
         <td style="font-weight:600">${esc(r.marca)}</td>
         <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis" title="${esc(r.campana)}">${esc(r.campana)}</td>
-        <td>${r.linkReporte ? `<a href="${esc(r.linkReporte)}" target="_blank" style="color:var(--purple);font-size:11px;font-weight:500;text-decoration:none" title="${esc(r.linkReporte)}">↗ Ver</a>` : `<span style="color:#ddd">—</span>`}</td>
+        <td>${r.linkReporte ? `<a href="${esc(r.linkReporte)}" target="_blank" style="color:var(--brand-pink-dk);font-size:11px;font-weight:500;text-decoration:none" title="${esc(r.linkReporte)}">↗ Ver</a>` : `<span style="color:#ddd">—</span>`}</td>
         ${meses.map(m=>`<td class="${r.porMes[m]>0?"num-cell":"empty-cell"}">${fmt(r.porMes[m])}</td>`).join("")}
         <td class="total-cell">${fmtPlain(r.total)}</td>
       </tr>`;
