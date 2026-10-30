@@ -1187,19 +1187,10 @@ function pintarFormatos(json) {
     $("fmt-body").innerHTML = `<div class="fmt-msg">Esta campaña no tiene formatos registrados.</div>`;
     return;
   }
-  // Agrupado por medio
-  const porMedio = {};
-  items.forEach(it => { (porMedio[it.medio || "Sin medio"] = porMedio[it.medio || "Sin medio"] || []).push(it); });
-  let filas = "";
-  Object.keys(porMedio).sort().forEach(m => {
-    const sub = porMedio[m].reduce((a, it) => a + (Number(it.inversion) || 0), 0);
-    filas += `<tr class="fmt-g"><td>${esc(m)}</td><td class="num">${soles2(sub)}</td></tr>`;
-    porMedio[m].forEach(it => {
-      filas += `<tr><td>${esc(it.formato || "—")}</td><td class="num">${soles2(it.inversion)}</td></tr>`;
-    });
-  });
+  const filas = items.map(it =>
+    `<tr><td>${esc(it.formato || "—")}</td><td class="num">${soles2(it.cobranding)}</td></tr>`).join("");
   $("fmt-body").innerHTML = `<table class="fmt-t">
-    <thead><tr><th>Formato</th><th class="num">Inversión</th></tr></thead>
+    <thead><tr><th>Formato</th><th class="num">Cobranding</th></tr></thead>
     <tbody>${filas}</tbody>
     <tfoot><tr><td>Total · ${items.length} formato${items.length === 1 ? "" : "s"}</td><td class="num">${soles2(json.total)}</td></tr></tfoot>
   </table>`;
