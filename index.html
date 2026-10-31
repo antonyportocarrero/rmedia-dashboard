@@ -1943,7 +1943,7 @@ document.addEventListener("click", e => {
   }
   const t = e.target.closest("[data-act],[data-tab],[data-pop],[data-metrica],[data-grupo],[data-vista]");
   if (!t) {
-    const fila = FEATURES.visorFormatos && e.target.closest("tr[data-fmt]");
+    const fila = FEATURES.visorFormatos && !e.target.closest("a,button,input,select,label") && e.target.closest("tr[data-fmt]");
     if (fila && !window.getSelection().toString()) abrirFormatos(fila.dataset.fmt);
     return;
   }
