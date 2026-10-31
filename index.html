@@ -249,6 +249,9 @@ a.id:hover,.lnk:hover{text-decoration:underline}
 .st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
 .st.amber{color:var(--amber);background:var(--amber-soft)}
 .st.green{color:var(--green);background:var(--green-soft)}
+.dias{display:inline-block;min-width:34px;padding:2px 8px;border-radius:99px;font-weight:700;font-size:11.5px;text-align:center;background:var(--sunken);color:var(--ink-3)}
+.dias.amb{background:var(--amber-soft);color:var(--amber)}
+.dias.roj{background:var(--red-soft);color:var(--red)}
 .sem{color:var(--ink-2);font-weight:600}
 .sem::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--line-2)}
 .sem.soon::before{background:var(--st0)}
@@ -1465,9 +1468,9 @@ function renderProveedor() {
     stat(soles2(total), "Total cobranding", "lead");
   T.info = `<b>${NF0.format(rows.length)}</b> líneas con reporte de medios enviado y reporte de proveedor pendiente`;
 
-  const ncols = 8 + meses.length + 1;
+  const ncols = 9 + meses.length + 1;
   T.cols = ncols;
-  $("p-thead").innerHTML = `<tr><th>ID Trello</th><th>1P/3P</th><th>Categoría</th><th>División</th><th>Departamento</th><th>Marca</th><th>Campaña</th><th>Reporte</th>${meses.map(m => `<th class="num">${esc(m)}</th>`).join("")}<th class="num">Total</th></tr>`;
+  $("p-thead").innerHTML = `<tr><th>ID Trello</th><th>1P/3P</th><th>Categoría</th><th>División</th><th>Departamento</th><th>Marca</th><th>Campaña</th><th>Reporte</th><th>Esperando</th>${meses.map(m => `<th class="num">${esc(m)}</th>`).join("")}<th class="num">Total</th></tr>`;
 
   const tb = $("p-tbody");
   if (!rows.length) {
@@ -1497,14 +1500,15 @@ function renderProveedor() {
         <td class="strong">${esc(r._marca)}</td>
         <td class="clip" title="${esc(r._campana)}">${esc(r._campana)}</td>
         <td><div class="acts">${link ? `<a class="lnk" href="${esc(link)}" target="_blank" rel="noopener" title="${esc(link)}">Ver${icon("ext", "ic xs")}</a>` : DASH}${hoja ? `<button type="button" class="icon-btn sm" data-act="recordar" data-pm="${esc(hoja)}" data-id="${esc(txt(r.idPlan))}" data-marca="${esc(r._marca)}" data-campana="${esc(r._campana)}" title="Enviar recordatorio a ${esc(pm)} por esta campaña">${icon("bell", "ic sm")}</button>` : ""}</div></td>
+        <td>${(() => { const d = r.dias; if (d == null) return DASH; const c = d >= 6 ? "roj" : d >= 3 ? "amb" : ""; return `<span class="dias ${c}" title="Días desde que se envió al PM">${d} d</span>`; })()}</td>
         ${meses.map(m => celda(Number(r.porMes?.[m]) || 0)).join("")}
         <td class="num tot">${(Number(r.total) || 0) > 0 ? soles2(Number(r.total)) : DASH}</td>
       </tr>`;
     }).join("");
-    html += `<tr class="sub"><td colspan="8">Subtotal ${esc(pm)}</td>${meses.map(m => celda(pmMes[m])).join("")}<td class="num tot">${soles2(pmTot)}</td></tr>`;
+    html += `<tr class="sub"><td colspan="9">Subtotal ${esc(pm)}</td>${meses.map(m => celda(pmMes[m])).join("")}<td class="num tot">${soles2(pmTot)}</td></tr>`;
   }
   const gtTotal = meses.reduce((s, m) => s + gt[m], 0);
-  html += `<tr class="total"><td colspan="8">Total general</td>${meses.map(m => `<td class="num">${soles2(gt[m])}</td>`).join("")}<td class="num">${soles2(gtTotal)}</td></tr>`;
+  html += `<tr class="total"><td colspan="9">Total general</td>${meses.map(m => `<td class="num">${soles2(gt[m])}</td>`).join("")}<td class="num">${soles2(gtTotal)}</td></tr>`;
   tb.innerHTML = html;
 }
 
@@ -1811,7 +1815,7 @@ function renderComercial() {
       }).join("");
     }
   }
-  html += `<tr class="total"><td colspan="8">Total general, ${plural(filas.length, "reporte")}</td><td class="num">${soles2(monto)}</td></tr>`;
+  html += `<tr class="total"><td colspan="9">Total general, ${plural(filas.length, "reporte")}</td><td class="num">${soles2(monto)}</td></tr>`;
   tb.innerHTML = html;
 }
 
