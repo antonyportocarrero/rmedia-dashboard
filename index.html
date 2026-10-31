@@ -191,6 +191,9 @@ h1,h2,h3,p{margin:0}
 .stat.amber .stat-n{color:var(--amber)}
 .stat.green .stat-n{color:var(--green)}
 .stat.pm .stat-n{font-size:16px}
+.stat.etp{border-left:4px solid var(--etp)}
+.stat.etp .stat-n{font-size:18px}
+.stat.etp .stat-l i{display:inline-block;width:7px;height:7px;margin-right:6px;border-radius:50%;background:var(--etp);vertical-align:middle}
 .stat.note{background:var(--amber-soft);border-color:transparent;box-shadow:none}
 .stat.note .stat-l{color:var(--amber);white-space:normal;max-width:240px}
 .stat.lead{margin-left:auto;background:var(--head);border-color:var(--head);color:#fff;padding-right:28px}
@@ -1776,6 +1779,16 @@ function renderComercial() {
     m.get(pm).push(r);
   }
   const pms = new Set(filas.map(r => r._pm).filter(Boolean));
+  const porEtapa = {};
+  for (const r of filas) {
+    const e = porEtapa[r.etapa] || (porEtapa[r.etapa] = { n: 0, monto: 0 });
+    e.n++; e.monto += Number(r.cobranding) || 0;
+  }
+  const statEtapa = k => {
+    const e = porEtapa[k]; if (!e) return "";
+    const info = ETAPA_COM[k];
+    return `<div class="stat etp" style="--etp:${info.color}"><span class="stat-n">${soles2(e.monto)}</span><span class="stat-l"><i></i>${esc(info.label)}, ${plural(e.n, "reporte")}</span></div>`;
+  };
 
   let corte = "";
   if (comState.finMes) {
@@ -1785,7 +1798,8 @@ function renderComercial() {
   $("com-stats").innerHTML =
     stat(periodos.size, esSem ? "Semanas" : "Meses") +
     stat(pms.size, "PMs") +
-    stat(filas.length, "Reportes pendientes", "amber") +
+    statEtapa("falta-enviar-pm") +
+    statEtapa("pm-no-envia-marca") +
     (corte ? `<div class="stat note"><span class="stat-l">${corte}</span></div>` : "") +
     stat(soles2(monto), "Monto total a cobrar", "lead");
   T.info = `<b>${NF0.format(filas.length)}</b> reportes por enviar, agrupados por ${esSem ? "semana tentativa" : "mes de campaña"}`;
@@ -1854,7 +1868,56 @@ async function exportarComercialExcel(btn) {
     const wb = new ExcelJS.Workbook();
     wb.creator = "Ripley Media";
     wb.created = new Date();
-    const ws = wb.addWorksheet("Envío Comercial", { views: [{ state: "frozen", ySplit: 1 }] });
+    // ── Hoja 1: Resumen por periodo y PM, separado por etapa ──
+    const wr = wb.addWorksheet("Resumen");
+    const negro = { type: "pattern", pattern: "solid", fgColor: { argb: "FF111111" } };
+    const gris  = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF2F2F2" } };
+    const oscuro = { type: "pattern", pattern: "solid", fgColor: { argb: "FF2B2B2B" } };
+    const blanco = { bold: true, color: { argb: "FFFFFFFF" } };
+    const MONEY = '"S/" #,##0.00';
+    const cobroSel = $("com-cobro").value;
+    wr.getCell("A1").value = "Envío a comercial — Resumen";
+    wr.getCell("A1").font = { bold: true, size: 14 };
+    wr.getCell("A2").value = `Vista: ${esSem ? "Por semana" : "Cierre de mes"} · Cobro: ${cobroSel === "TODOS" ? "Todos" : cobroSel}${comState.finMes ? " · Hasta fin de mes" : ""} · Generado: ${new Date().toLocaleDateString("es-PE")}`;
+    wr.getCell("A2").font = { italic: true, color: { argb: "FF666666" } };
+    const hdr = wr.getRow(4);
+    hdr.values = [esSem ? "Semana" : "Mes", "PM", "Falta enviar al PM", "PM no lo mandó a marca", "Total", "Reportes"];
+    hdr.eachCell(c => { c.fill = negro; c.font = blanco; });
+
+    const per = new Map();
+    for (const r of filas) {
+      const p = periodoCom(r), pm = r._pm || "(sin PM)";
+      if (!per.has(p)) per.set(p, new Map());
+      const m = per.get(p);
+      if (!m.has(pm)) m.set(pm, { a: 0, b: 0, n: 0 });
+      const x = m.get(pm), v = Number(r.cobranding) || 0;
+      if (r.etapa === "falta-enviar-pm") x.a += v; else x.b += v;
+      x.n++;
+    }
+    let fila = 5;
+    const gt = { a: 0, b: 0, n: 0 };
+    for (const p of [...per.keys()].sort(orden)) {
+      const s = { a: 0, b: 0, n: 0 };
+      let primera = true;
+      for (const pm of [...per.get(p).keys()].sort(cmpEs)) {
+        const x = per.get(p).get(pm);
+        wr.getRow(fila).values = [primera ? p : "", pm, x.a, x.b, x.a + x.b, x.n];
+        primera = false;
+        s.a += x.a; s.b += x.b; s.n += x.n; fila++;
+      }
+      const sub = wr.getRow(fila);
+      sub.values = [`Subtotal ${String(p).split(" - ")[0]}`, "", s.a, s.b, s.a + s.b, s.n];
+      sub.eachCell({ includeEmpty: true }, c => { c.fill = gris; c.font = { bold: true }; });
+      gt.a += s.a; gt.b += s.b; gt.n += s.n; fila++;
+    }
+    const tot = wr.getRow(fila);
+    tot.values = ["Total general", "", gt.a, gt.b, gt.a + gt.b, gt.n];
+    tot.eachCell({ includeEmpty: true }, c => { c.fill = oscuro; c.font = blanco; });
+    [3, 4, 5].forEach(c => { wr.getColumn(c).numFmt = MONEY; });
+    [30, 16, 20, 24, 16, 10].forEach((w, i) => { wr.getColumn(i + 1).width = w; });
+
+    // ── Hoja 2: Detalle (la tabla de siempre + fila Total) ──
+    const ws = wb.addWorksheet("Detalle", { views: [{ state: "frozen", ySplit: 1 }] });
     const cols = ["ID Trello", esSem ? "Semana tentativa" : "Mes de cierre", "PM", "1P/3P", "Categoría", "División", "Departamento", "Marca", "Campaña", "Mes de campaña", "Etapa", "Monto (S/)", "Estado cobro"];
     ws.addTable({
       name: "EnvioComercial", ref: "A1", headerRow: true, totalsRow: false,
@@ -1863,7 +1926,11 @@ async function exportarComercialExcel(btn) {
       rows: data,
     });
     [16, 16, 16, 10, 14, 16, 18, 20, 30, 16, 22, 14, 14].forEach((w, i) => { ws.getColumn(i + 1).width = w; });
-    ws.getColumn(12).numFmt = '"S/" #,##0.00';
+    ws.getColumn(12).numFmt = MONEY;
+    const filaTot = ws.getRow(data.length + 2);
+    filaTot.getCell(1).value = "Total";
+    filaTot.getCell(12).value = { formula: `SUBTOTAL(109,L2:L${data.length + 1})` };
+    for (let c = 1; c <= 13; c++) { filaTot.getCell(c).font = { bold: true }; filaTot.getCell(c).fill = gris; }
     ws.getRow(1).height = 20;
     ws.getRow(1).alignment = { vertical: "middle" };
 
