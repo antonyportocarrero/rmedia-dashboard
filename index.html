@@ -1087,10 +1087,31 @@ function indexarR(rows) {
   return rows;
 }
 
+/* Solo año en curso: oculta filas cuya semana tentativa cae en un año posterior.
+   El año sale de "mes/año"; si la semana es menor a la semana de inicio del mes
+   (ej. campaña de diciembre con semana 1), se asume que es del año siguiente. */
+const SOLO_ANIO_EN_CURSO = true;
+const MESES_ = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+function anioSem(r) {
+  const y4 = String(r._sem || "").match(/\b(20\d{2})\b/);
+  if (y4) return +y4[1];
+  const [m = "", y] = String(r._mes || "").toLowerCase().split("/");
+  const anio = parseInt(y, 10);
+  if (!anio) return null;
+  const mi = MESES_.indexOf(m.trim()), n = numSem(r._sem);
+  if (mi < 0 || n === 9999) return anio;
+  return n < semanaDe(new Date(anio, mi, 1)) - 1 ? anio + 1 : anio;
+}
+const delAnioEnCurso = r => {
+  if (!SOLO_ANIO_EN_CURSO) return true;
+  const a = anioSem(r);
+  return a === null || a <= new Date().getFullYear();
+};
+
 defTab("reporting", {
   tbody: "r-tbody", stats: "r-stats", cols: 13, filtro: "r",
   qs: () => `endpoint=reporting&cobro=${enc($("r-cobro").value)}`,
-  ingerir(json) { this.data = indexarR(json.rows || []); FILTROS.r.nuevosDatos(); },
+  ingerir(json) { this.data = indexarR(json.rows || []).filter(delAnioEnCurso); FILTROS.r.nuevosDatos(); },
   pintar: () => renderReporting(),
 });
 
@@ -1727,6 +1748,7 @@ defTab("comercial", {
   qs: () => "endpoint=envio-comercial",
   ingerir(json) {
     this.data = indexarR(json.rows || [])
+      .filter(delAnioEnCurso)
       .filter(r => !/AUTOGESTI[OÓ]N/i.test(txt(r.pmRipley)))
       .filter(r => ETAPAS_ENVIO_PENDIENTE.has(r.etapa));
     FILTROS.com.nuevosDatos();
